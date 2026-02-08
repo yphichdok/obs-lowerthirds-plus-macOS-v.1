@@ -1,6 +1,6 @@
 # Lower Thirds Plus - OBS Studio Plugin for macOS
 
-Professional lower thirds plugin with 5 tabbed profiles, 13 animation styles, and extensive customization.
+Professional lower thirds plugin with 5 tabbed profiles, 16 animation styles, and extensive customization.
 
 **Author:** Y Phic Hdok  
 **Company:** MTD Technologies  
@@ -12,8 +12,9 @@ Professional lower thirds plugin with 5 tabbed profiles, 13 animation styles, an
 ## 🎯 Features
 
 - **5 Independent Tabs** - Pre-configure different lower thirds, switch with one click
-- **13 Animation Styles** - Slide, fade, zoom, expand, push, wipe, instant
-- **Modern Animations** - Smooth 1-second animations with professional easing
+- **16 Animation Styles** - Slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant
+- **Independent Animations** - Separate animation controls for background, logo, and text
+- **Modern Animations** - Smooth 1.4-second animations with professional easing
 - **Full Customization** - Fonts, colors, sizes, logo, backgrounds
 - **Auto-Hide** - Automatically hides after set duration
 - **Preview Mode** - See live preview while editing
@@ -120,9 +121,10 @@ The DMG includes:
 - Auto-scale option (OFF by default for stability)
 
 ### Animation
-- 13 different animation styles
-- 1.0 second smooth duration
-- Professional easing curves
+- 16 different animation styles (slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant)
+- Independent animation selection for background, logo, and text
+- 1.4 second smooth duration
+- Professional easing curves (ease-out-expo, ease-in-out-quint)
 - Auto-hide after duration (1-30 seconds)
 
 ---
@@ -191,21 +193,28 @@ The plugin will be:
 
 ## 🎬 Animation Styles
 
-1. **↖ Slide from Left** - Classic left entrance
-2. **↗ Slide from Right** - Right entrance
-3. **↑ Slide from Bottom** - Upward reveal
-4. **↓ Slide from Top** - Downward reveal
-5. **⊙ Fade In** - Smooth fade
-6. **⊕ Zoom In** - Center zoom
-7. **⇤ Expand from Left** - Horizontal stretch (left)
-8. **⇥ Expand from Right** - Horizontal stretch (right)
-9. **⟵ Push from Left** - Slide + scale
-10. **⟶ Push from Right** - Slide + scale
-11. **⇐ Wipe from Left** - Reveal from left
-12. **⇒ Wipe from Right** - Reveal from right
-13. **⚡ Instant** - No animation
+Each animation has distinct characteristics for professional variety:
 
-All animations use modern easing curves for professional, broadcast-quality results.
+1. **↖ Slide from Left** - Pure horizontal slide from left, no scaling
+2. **↗ Slide from Right** - Pure horizontal slide from right, no scaling
+3. **↑ Slide from Bottom** - Pure vertical slide upward, no scaling
+4. **↓ Slide from Top** - Pure vertical slide downward, no scaling
+5. **⊙ Fade In** - Minimal scale fade (98%-100%), opacity-driven
+6. **⊕ Zoom In** - Dramatic zoom from 30%-100%, centered
+7. **⇤ Expand from Left** - Horizontal stretch anchored to left edge
+8. **⇥ Expand from Right** - Horizontal stretch anchored to right edge
+9. **⟵ Push from Left** - Slide + perspective squeeze with 3D depth effect
+10. **⟶ Push from Right** - Slide + perspective squeeze with 3D depth effect
+11. **⇐ Wipe from Left** - Diagonal wipe with sweep motion
+12. **⇒ Wipe from Right** - Diagonal wipe with sweep motion
+13. **↻ Spin** - 720° logo rotation / 45° background rotation with zoom
+14. **⇢ Scroll** - Extended smooth scroll (120% travel), no scaling
+15. **⟲ Roll** - 360° tumble with sine wave bobbing effect
+16. **⚡ Instant** - No animation, immediate appearance
+
+**Independent Control:** Set different animations for background, logo, and text separately for creative combinations!
+
+All animations use professional easing curves (ease-out-expo, ease-in-out-quint) for broadcast-quality results.
 
 ---
 
@@ -243,10 +252,11 @@ brew install cmake
 
 ### Version 1.0 (February 2026)
 - 5 tabbed profiles for quick switching
-- 13 professional animation styles
-- Modern smooth animations (1.0s duration)
+- 16 professional animation styles (slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant)
+- Independent animation controls for background, logo, and text
+- Modern smooth animations (1.4s duration) with staggered element timing
 - Full text customization with system fonts
-- Logo support (left side, optional)
+- Logo support (left side, optional) with independent animation and spin effect
 - Background images and gradients
 - Right-side text fields (optional)
 - Preview mode for live editing
@@ -254,8 +264,9 @@ brew install cmake
 - Fixed profile switching behavior
 - Color picker accuracy fix (ABGR format)
 - Stable text/logo positioning on resize
-- Enhanced text transformations with scale effects
-- Professional easing functions (ease-out-expo, ease-out-back, etc.)
+- Enhanced text transformations with unique scale effects per style
+- Professional easing functions (ease-out-expo, ease-in-out-quint)
+- Distinct visual characteristics for every animation style
 
 ---
 

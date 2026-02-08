@@ -18,7 +18,10 @@ enum AnimationStyle {
 	ANIM_PUSH_RIGHT = 9,
 	ANIM_WIPE_LEFT = 10,
 	ANIM_WIPE_RIGHT = 11,
-	ANIM_INSTANT = 12
+	ANIM_SPIN = 12,
+	ANIM_SCROLL = 13,
+	ANIM_ROLL = 14,
+	ANIM_INSTANT = 15
 };
 
 // Gradient direction options
@@ -87,7 +90,9 @@ struct lowerthirds_source {
 	// Animation state
 	bool is_visible;
 	float animation_progress;
-	AnimationStyle animation_style;
+	AnimationStyle animation_style;        // Background animation
+	AnimationStyle logo_animation_style;   // Logo animation (independent)
+	AnimationStyle text_animation_style;   // Text animation (independent)
 	
 	// Auto-hide timer
 	bool auto_hide_enabled;

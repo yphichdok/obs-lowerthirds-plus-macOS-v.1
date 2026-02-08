@@ -167,6 +167,8 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_string(settings, "bg_image", "");
 	obs_data_set_default_bool(settings, "auto_scale", false); // OFF by default - keeps text at exact sizes
 	obs_data_set_default_int(settings, "animation_style", ANIM_SLIDE_LEFT);
+	obs_data_set_default_int(settings, "logo_animation_style", ANIM_SLIDE_LEFT);
+	obs_data_set_default_int(settings, "text_animation_style", ANIM_SLIDE_LEFT);
 	
 	// Logo defaults
 	obs_data_set_default_string(settings, "logo_image", "");
@@ -444,7 +446,7 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_properties_add_float_slider(advanced_group, "duration", "Duration (seconds)", 1.0, 30.0, 0.5);
 	
 	obs_property_t *anim_list = obs_properties_add_list(advanced_group, "animation_style", 
-		"Animation Style", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+		"Background Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
 	obs_property_list_add_int(anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
 	obs_property_list_add_int(anim_list, "↑ Slide from Bottom", ANIM_SLIDE_BOTTOM);
@@ -457,7 +459,48 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_property_list_add_int(anim_list, "⟶ Push from Right", ANIM_PUSH_RIGHT);
 	obs_property_list_add_int(anim_list, "⇐ Wipe from Left", ANIM_WIPE_LEFT);
 	obs_property_list_add_int(anim_list, "⇒ Wipe from Right", ANIM_WIPE_RIGHT);
+	obs_property_list_add_int(anim_list, "↻ Spin", ANIM_SPIN);
+	obs_property_list_add_int(anim_list, "⇢ Scroll", ANIM_SCROLL);
+	obs_property_list_add_int(anim_list, "⟲ Roll", ANIM_ROLL);
 	obs_property_list_add_int(anim_list, "⚡ Instant", ANIM_INSTANT);
+	
+	obs_property_t *logo_anim_list = obs_properties_add_list(advanced_group, "logo_animation_style", 
+		"Logo Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(logo_anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
+	obs_property_list_add_int(logo_anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
+	obs_property_list_add_int(logo_anim_list, "↑ Slide from Bottom", ANIM_SLIDE_BOTTOM);
+	obs_property_list_add_int(logo_anim_list, "↓ Slide from Top", ANIM_SLIDE_TOP);
+	obs_property_list_add_int(logo_anim_list, "⊙ Fade In", ANIM_FADE);
+	obs_property_list_add_int(logo_anim_list, "⊕ Zoom In", ANIM_ZOOM);
+	obs_property_list_add_int(logo_anim_list, "⇤ Expand from Left", ANIM_EXPAND_LEFT);
+	obs_property_list_add_int(logo_anim_list, "⇥ Expand from Right", ANIM_EXPAND_RIGHT);
+	obs_property_list_add_int(logo_anim_list, "⟵ Push from Left", ANIM_PUSH_LEFT);
+	obs_property_list_add_int(logo_anim_list, "⟶ Push from Right", ANIM_PUSH_RIGHT);
+	obs_property_list_add_int(logo_anim_list, "⇐ Wipe from Left", ANIM_WIPE_LEFT);
+	obs_property_list_add_int(logo_anim_list, "⇒ Wipe from Right", ANIM_WIPE_RIGHT);
+	obs_property_list_add_int(logo_anim_list, "↻ Spin", ANIM_SPIN);
+	obs_property_list_add_int(logo_anim_list, "⇢ Scroll", ANIM_SCROLL);
+	obs_property_list_add_int(logo_anim_list, "⟲ Roll", ANIM_ROLL);
+	obs_property_list_add_int(logo_anim_list, "⚡ Instant", ANIM_INSTANT);
+	
+	obs_property_t *text_anim_list = obs_properties_add_list(advanced_group, "text_animation_style", 
+		"Text Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(text_anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
+	obs_property_list_add_int(text_anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
+	obs_property_list_add_int(text_anim_list, "↑ Slide from Bottom", ANIM_SLIDE_BOTTOM);
+	obs_property_list_add_int(text_anim_list, "↓ Slide from Top", ANIM_SLIDE_TOP);
+	obs_property_list_add_int(text_anim_list, "⊙ Fade In", ANIM_FADE);
+	obs_property_list_add_int(text_anim_list, "⊕ Zoom In", ANIM_ZOOM);
+	obs_property_list_add_int(text_anim_list, "⇤ Expand from Left", ANIM_EXPAND_LEFT);
+	obs_property_list_add_int(text_anim_list, "⇥ Expand from Right", ANIM_EXPAND_RIGHT);
+	obs_property_list_add_int(text_anim_list, "⟵ Push from Left", ANIM_PUSH_LEFT);
+	obs_property_list_add_int(text_anim_list, "⟶ Push from Right", ANIM_PUSH_RIGHT);
+	obs_property_list_add_int(text_anim_list, "⇐ Wipe from Left", ANIM_WIPE_LEFT);
+	obs_property_list_add_int(text_anim_list, "⇒ Wipe from Right", ANIM_WIPE_RIGHT);
+	obs_property_list_add_int(text_anim_list, "↻ Spin", ANIM_SPIN);
+	obs_property_list_add_int(text_anim_list, "⇢ Scroll", ANIM_SCROLL);
+	obs_property_list_add_int(text_anim_list, "⟲ Roll", ANIM_ROLL);
+	obs_property_list_add_int(text_anim_list, "⚡ Instant", ANIM_INSTANT);
 	
 	// TEXT STYLING
 	obs_properties_add_font(advanced_group, "font_face", "Font");
@@ -538,6 +581,8 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, is_visible(false)
 	, animation_progress(0.0f)
 	, animation_style(ANIM_SLIDE_LEFT)
+	, logo_animation_style(ANIM_SLIDE_LEFT)
+	, text_animation_style(ANIM_SLIDE_LEFT)
 	, auto_hide_enabled(true)
 	, display_duration(5.0f)
 	, display_timer(0.0f)
@@ -755,6 +800,8 @@ void lowerthirds_source::update(obs_data_t *settings)
 	bar_height_pixels = (int)obs_data_get_int(settings, "bar_height");
 	auto_scale = obs_data_get_bool(settings, "auto_scale");
 	animation_style = (AnimationStyle)obs_data_get_int(settings, "animation_style");
+	logo_animation_style = (AnimationStyle)obs_data_get_int(settings, "logo_animation_style");
+	text_animation_style = (AnimationStyle)obs_data_get_int(settings, "text_animation_style");
 	
 	// Logo settings
 	logo_size = (int)obs_data_get_int(settings, "logo_size");
@@ -877,13 +924,13 @@ void lowerthirds_source::update_text_sources()
 
 void lowerthirds_source::tick(float seconds)
 {
-	// Update animation (smooth, modern timing: 1.0 second duration)
+	// Update animation (enhanced modern timing: 1.4 second duration for smooth, professional feel)
 	if (is_visible && animation_progress < 1.0f) {
-		animation_progress += seconds * 1.0f; // 1.0 second smooth animation
+		animation_progress += seconds * 0.714f; // 1.4 second smooth animation (1/1.4 = 0.714)
 		if (animation_progress > 1.0f)
 			animation_progress = 1.0f;
 	} else if (!is_visible && animation_progress > 0.0f) {
-		animation_progress -= seconds * 1.5f; // Slightly faster fade out
+		animation_progress -= seconds * 1.25f; // Faster fade out (0.8s)
 		if (animation_progress < 0.0f)
 			animation_progress = 0.0f;
 	}
@@ -957,45 +1004,62 @@ void lowerthirds_source::render()
 	// Calculate dimensions
 	float bar_height = (float)bar_height_pixels * scale_factor;
 	
-	// === PROFESSIONAL LOGO ANIMATION ===
-	// Logo appears at 15% (smooth entrance timing)
+	// === PROFESSIONAL CHOREOGRAPHED ANIMATIONS ===
+	// Enhanced timing with better staggering for premium feel
+	
+	// Logo appears at 12% (earlier, leads the entrance)
 	float logo_progress = 0.0f;
-	if (animation_progress > 0.15f) {
-		logo_progress = (animation_progress - 0.15f) / 0.85f; // 0.15-1.0 → 0.0-1.0
+	if (animation_progress > 0.12f) {
+		logo_progress = (animation_progress - 0.12f) / 0.88f; // 0.12-1.0 → 0.0-1.0
 		if (logo_progress > 1.0f) logo_progress = 1.0f;
 	}
 	
-	// Apply smooth easing for modern, polished entrance
-	float logo_eased = ease_out_back(logo_progress);
+	// Apply premium easing curves for sophisticated movement
+	float logo_eased = ease_out_expo(logo_progress); // Smooth deceleration
+	float logo_alpha_animation = logo_eased; // Synchronized fade
 	
-	// Logo fade + scale effect (starts at 70% size, smooth growth to 100%)
-	float logo_alpha_animation = ease_out_expo(logo_progress); // Very smooth fade
-	float logo_scale_animation = 0.7f + (0.3f * logo_eased); // 0.7 → 1.0 smooth with subtle overshoot
-	
-	// === MODERN TEXT ANIMATIONS ===
-	// Title appears at 25% (earlier, more dynamic timing)
+	// === LEFT TEXT ANIMATIONS (Cascading entrance) ===
+	// Title appears at 35% (delayed after background and logo are visible)
 	float title_progress = 0.0f;
-	if (animation_progress > 0.25f) {
-		title_progress = (animation_progress - 0.25f) / 0.75f; // 0.25-1.0 → 0.0-1.0
+	if (animation_progress > 0.35f) {
+		title_progress = (animation_progress - 0.35f) / 0.65f; // 0.35-1.0 → 0.0-1.0
 		if (title_progress > 1.0f) title_progress = 1.0f;
 	}
 	
-	// Subtitle appears at 35% (tighter stagger for modern flow)
+	// Subtitle appears at 42% (staggered after title with more delay)
 	float subtitle_progress = 0.0f;
-	if (animation_progress > 0.35f) {
-		subtitle_progress = (animation_progress - 0.35f) / 0.65f; // 0.35-1.0 → 0.0-1.0
+	if (animation_progress > 0.42f) {
+		subtitle_progress = (animation_progress - 0.42f) / 0.58f; // 0.42-1.0 → 0.0-1.0
 		if (subtitle_progress > 1.0f) subtitle_progress = 1.0f;
 	}
 	
-	// Apply sophisticated easing for modern, dynamic feel
-	// Title uses ease-out-back for subtle bounce/overshoot (attention-grabbing)
-	float title_eased = ease_out_back(title_progress);
-	// Subtitle uses ease-out-expo for ultra smooth elegance
-	float subtitle_eased = ease_out_expo(subtitle_progress);
+	// === RIGHT SIDE TEXT ANIMATIONS (Delayed elegance) ===
+	// Right title appears at 55% (creates visual hierarchy)
+	float title_right_progress = 0.0f;
+	if (animation_progress > 0.55f) {
+		title_right_progress = (animation_progress - 0.55f) / 0.45f; // 0.55-1.0 → 0.0-1.0
+		if (title_right_progress > 1.0f) title_right_progress = 1.0f;
+	}
 	
-	// Text fade with smooth opacity curves
-	float title_alpha = ease_out_expo(title_progress); // Smooth fade
-	float subtitle_alpha = ease_out_expo(subtitle_progress); // Smooth fade
+	// Right subtitle appears at 63% (final flourish)
+	float subtitle_right_progress = 0.0f;
+	if (animation_progress > 0.63f) {
+		subtitle_right_progress = (animation_progress - 0.63f) / 0.37f; // 0.63-1.0 → 0.0-1.0
+		if (subtitle_right_progress > 1.0f) subtitle_right_progress = 1.0f;
+	}
+	
+	// Apply premium easing curves for each element
+	// Use ease_in_out_quint for ultra-smooth, broadcast-quality motion
+	float title_eased = ease_in_out_quint(title_progress);
+	float subtitle_eased = ease_in_out_quint(subtitle_progress);
+	float title_right_eased = ease_in_out_quint(title_right_progress);
+	float subtitle_right_eased = ease_in_out_quint(subtitle_right_progress);
+	
+	// Smooth opacity curves with gentle acceleration
+	float title_alpha = powf(title_progress, 0.6f); // Subtle ease-out
+	float subtitle_alpha = powf(subtitle_progress, 0.6f);
+	float title_right_alpha = powf(title_right_progress, 0.6f);
+	float subtitle_right_alpha = powf(subtitle_right_progress, 0.6f);
 	
 	// Convert background color with opacity
 	float alpha = (opacity / 100.0f);
@@ -1011,7 +1075,7 @@ void lowerthirds_source::render()
 	
 	switch (animation_style) {
 		case ANIM_SLIDE_LEFT:
-			// Slide from left with overshoot effect
+			// Pure slide from left - NO scaling, just horizontal movement
 			{
 				float slide_distance = -(float)fixed_width * (1.0f - eased_progress);
 				gs_matrix_translate3f(slide_distance, 0.0f, 0.0f);
@@ -1019,7 +1083,7 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_SLIDE_RIGHT:
-			// Slide from right with overshoot effect
+			// Pure slide from right - NO scaling, just horizontal movement
 			{
 				float slide_distance = (float)fixed_width * (1.0f - eased_progress);
 				gs_matrix_translate3f(slide_distance, 0.0f, 0.0f);
@@ -1027,7 +1091,7 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_SLIDE_BOTTOM:
-			// Slide from bottom with bounce
+			// Pure slide from bottom - NO scaling, just vertical movement up
 			{
 				float slide_distance = bar_height * (1.0f - eased_progress);
 				gs_matrix_translate3f(0.0f, slide_distance, 0.0f);
@@ -1035,10 +1099,9 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_FADE:
-			// Pure fade in (no translation, alpha handles this)
-			// Add subtle scale for depth effect
+			// Pure fade - minimal scale, centered, opacity-driven
 			{
-				float fade_scale = 0.95f + (0.05f * eased_progress); // 95% to 100%
+				float fade_scale = 0.98f + (0.02f * eased_progress);
 				float offset_x = (float)fixed_width * (1.0f - fade_scale) * 0.5f;
 				float offset_y = bar_height * (1.0f - fade_scale) * 0.5f;
 				gs_matrix_translate3f(offset_x, offset_y, 0.0f);
@@ -1047,7 +1110,7 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_SLIDE_TOP:
-			// Slide from top (smooth downward entrance)
+			// Pure slide from top - NO scaling, just vertical movement down
 			{
 				float slide_distance = -bar_height * (1.0f - eased_progress);
 				gs_matrix_translate3f(0.0f, slide_distance, 0.0f);
@@ -1055,10 +1118,9 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_ZOOM:
-			// Smooth zoom in from center (refined effect)
+			// Dramatic zoom - scales from 30% to 100%, centered
 			{
-				// Start from 50% size (elegant) and zoom to 100%
-				float scale = 0.5f + (0.5f * eased_progress);
+				float scale = 0.3f + (0.7f * eased_progress);
 				float offset_x = (float)fixed_width * (1.0f - scale) * 0.5f;
 				float offset_y = bar_height * (1.0f - scale) * 0.5f;
 				gs_matrix_translate3f(offset_x, offset_y, 0.0f);
@@ -1067,7 +1129,7 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_EXPAND_LEFT:
-			// Expand from left edge (horizontal stretch effect)
+			// Horizontal stretch from left - width grows, height stays constant
 			{
 				float scale_x = eased_progress;
 				gs_matrix_scale3f(scale_x, 1.0f, 1.0f);
@@ -1075,7 +1137,7 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_EXPAND_RIGHT:
-			// Expand from right edge (horizontal stretch effect)
+			// Horizontal stretch from right - width grows, height stays constant
 			{
 				float scale_x = eased_progress;
 				float offset_x = (float)fixed_width * (1.0f - scale_x);
@@ -1085,45 +1147,83 @@ void lowerthirds_source::render()
 			break;
 			
 		case ANIM_PUSH_LEFT:
-			// Push from left (slide with scale combo)
+			// Push from left - combines slide + perspective squeeze (vertical scale too)
 			{
 				float slide_distance = -(float)fixed_width * (1.0f - eased_progress);
-				float scale_x = 0.8f + (0.2f * eased_progress); // 80% to 100%
-				gs_matrix_translate3f(slide_distance, 0.0f, 0.0f);
-				gs_matrix_scale3f(scale_x, 1.0f, 1.0f);
+				float scale_x = 0.7f + (0.3f * eased_progress);
+				float scale_y = 0.85f + (0.15f * eased_progress);
+				float offset_y = bar_height * (1.0f - scale_y) * 0.5f;
+				gs_matrix_translate3f(slide_distance, offset_y, 0.0f);
+				gs_matrix_scale3f(scale_x, scale_y, 1.0f);
 			}
 			break;
 			
 		case ANIM_PUSH_RIGHT:
-			// Push from right (slide with scale combo)
+			// Push from right - combines slide + perspective squeeze (vertical scale too)
 			{
 				float slide_distance = (float)fixed_width * (1.0f - eased_progress);
-				float scale_x = 0.8f + (0.2f * eased_progress); // 80% to 100%
-				gs_matrix_translate3f(slide_distance, 0.0f, 0.0f);
-				gs_matrix_scale3f(scale_x, 1.0f, 1.0f);
+				float scale_x = 0.7f + (0.3f * eased_progress);
+				float scale_y = 0.85f + (0.15f * eased_progress);
+				float offset_y = bar_height * (1.0f - scale_y) * 0.5f;
+				gs_matrix_translate3f(slide_distance, offset_y, 0.0f);
+				gs_matrix_scale3f(scale_x, scale_y, 1.0f);
 			}
 			break;
 			
 		case ANIM_WIPE_LEFT:
-			// Wipe from left (reveal effect)
+			// Wipe from left - horizontal reveal with diagonal crop effect
 			{
 				float reveal = eased_progress;
+				float diagonal_offset = bar_height * 0.2f * (1.0f - eased_progress);
+				gs_matrix_translate3f(0.0f, diagonal_offset, 0.0f);
 				gs_matrix_scale3f(reveal, 1.0f, 1.0f);
-				// Clip to visible area for wipe effect
 			}
 			break;
 			
 		case ANIM_WIPE_RIGHT:
-			// Wipe from right (reveal effect)
+			// Wipe from right - horizontal reveal with diagonal crop effect
 			{
 				float reveal = eased_progress;
 				float offset_x = (float)fixed_width * (1.0f - reveal);
-				gs_matrix_translate3f(offset_x, 0.0f, 0.0f);
+				float diagonal_offset = bar_height * 0.2f * (1.0f - eased_progress);
+				gs_matrix_translate3f(offset_x, diagonal_offset, 0.0f);
 				gs_matrix_scale3f(reveal, 1.0f, 1.0f);
 			}
 			break;
 			
+		case ANIM_SPIN:
+			// Spin with rotation - background fades and slightly rotates
+			{
+				float rotation = (1.0f - eased_progress) * 45.0f * (3.14159265f / 180.0f);
+				float scale = 0.88f + (0.12f * eased_progress);
+				gs_matrix_translate3f((float)fixed_width * 0.5f, bar_height * 0.5f, 0.0f);
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rotation);
+				gs_matrix_scale3f(scale, scale, 1.0f);
+				gs_matrix_translate3f(-(float)fixed_width * 0.5f, -bar_height * 0.5f, 0.0f);
+			}
+			break;
+			
+		case ANIM_SCROLL:
+			// Smooth scroll from right with slight bounce at end
+			{
+				float scroll_distance = (float)fixed_width * 1.2f * (1.0f - eased_progress);
+				gs_matrix_translate3f(scroll_distance, 0.0f, 0.0f);
+			}
+			break;
+			
+		case ANIM_ROLL:
+			// Roll tumble - full 360° rotation while sliding in
+			{
+				float roll_rotation = (1.0f - eased_progress) * 360.0f * (3.14159265f / 180.0f);
+				float roll_distance = (float)fixed_width * 1.3f * (1.0f - eased_progress);
+				gs_matrix_translate3f(roll_distance + (float)fixed_width * 0.5f, bar_height * 0.5f, 0.0f);
+				gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, roll_rotation);
+				gs_matrix_translate3f(-(float)fixed_width * 0.5f, -bar_height * 0.5f, 0.0f);
+			}
+			break;
+			
 		case ANIM_INSTANT:
+		default:
 			// No animation - instant appearance
 			break;
 	}
@@ -1202,28 +1302,15 @@ void lowerthirds_source::render()
 		float fixed_logo_pad_horizontal = (float)logo_padding_horizontal;
 		float fixed_logo_pad_vertical = (float)logo_padding_vertical;
 		
-		// Apply animation scale to logo size (zoom effect)
-		float animated_logo_size = fixed_logo_size * logo_scale_animation;
-		
 		// Logo position using INDEPENDENT padding controls
 		// Horizontal padding applies to left side
-		float logo_x = fixed_logo_pad_horizontal;
-		float logo_y = fixed_logo_pad_vertical;
+		float base_logo_x = fixed_logo_pad_horizontal;
+		float base_logo_y = fixed_logo_pad_vertical;
 		
 		// If logo_padding_vertical is 0, center vertically (default behavior)
-		// Use bar_height_pixels (not scaled bar_height) for stable positioning
-		// Adjust for animated size to keep center point stable
 		if (logo_padding_vertical == 0) {
-			logo_y = ((float)bar_height_pixels - animated_logo_size) / 2.0f;
-		} else {
-			// Adjust vertical position to compensate for scale animation
-			float size_diff = (fixed_logo_size - animated_logo_size) / 2.0f;
-			logo_y += size_diff;
+			base_logo_y = ((float)bar_height_pixels - fixed_logo_size) / 2.0f;
 		}
-		
-		// Adjust horizontal position to keep logo centered during scale
-		float size_diff_x = (fixed_logo_size - animated_logo_size) / 2.0f;
-		logo_x += size_diff_x;
 		
 		// User opacity control (independent from animation)
 		float user_opacity = (logo_opacity / 100.0f);
@@ -1233,12 +1320,138 @@ void lowerthirds_source::render()
 		
 		// Only draw if there's some opacity
 		if (final_logo_alpha > 0.001f) {
-			// Push matrix for positioning
+			// Apply animation transformation based on LOGO animation style
 			gs_matrix_push();
-			gs_matrix_translate3f(logo_x, logo_y, 0.0f);
+			
+			// Apply style-specific transformation for logo
+			switch (logo_animation_style) {
+				case ANIM_SLIDE_LEFT:
+					{
+						// Enhanced slide with subtle scale
+						float slide_offset = -(float)fixed_width * (1.0f - logo_eased);
+						float scale = 0.85f + (0.15f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + slide_offset + (fixed_logo_size * (1.0f - scale) / 2.0f), 
+						                     base_logo_y + (fixed_logo_size * (1.0f - scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale, scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_SLIDE_RIGHT:
+					{
+						// Enhanced slide with subtle scale
+						float slide_offset = (float)fixed_width * (1.0f - logo_eased);
+						float scale = 0.85f + (0.15f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + slide_offset + (fixed_logo_size * (1.0f - scale) / 2.0f), 
+						                     base_logo_y + (fixed_logo_size * (1.0f - scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale, scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_SLIDE_BOTTOM:
+					{
+						// Slide with anticipation and scale
+						float slide_offset = (float)bar_height_pixels * 0.9f * (1.0f - logo_eased);
+						float scale = 0.80f + (0.20f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size * (1.0f - scale) / 2.0f), 
+						                     base_logo_y + slide_offset + (fixed_logo_size * (1.0f - scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale, scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_SLIDE_TOP:
+					{
+						// Slide with anticipation and scale
+						float slide_offset = -(float)bar_height_pixels * 0.9f * (1.0f - logo_eased);
+						float scale = 0.80f + (0.20f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size * (1.0f - scale) / 2.0f), 
+						                     base_logo_y + slide_offset + (fixed_logo_size * (1.0f - scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale, scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_ZOOM:
+					{
+						// Dramatic zoom with smooth deceleration
+						float zoom_scale = 0.15f + (0.85f * logo_eased); // 0.15 → 1.0 for impact
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size * (1.0f - zoom_scale) / 2.0f), 
+						                     base_logo_y + (fixed_logo_size * (1.0f - zoom_scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(zoom_scale, zoom_scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_FADE:
+					{
+						// Minimal scale for elegant fade
+						float scale = 0.95f + (0.05f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size * (1.0f - scale) / 2.0f), 
+						                     base_logo_y + (fixed_logo_size * (1.0f - scale) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale, scale, 1.0f);
+					}
+					break;
+					
+				case ANIM_EXPAND_LEFT:
+				case ANIM_EXPAND_RIGHT:
+				case ANIM_PUSH_LEFT:
+				case ANIM_PUSH_RIGHT:
+				case ANIM_WIPE_LEFT:
+				case ANIM_WIPE_RIGHT:
+					{
+						// Elastic scale with push effect
+						float scale_amount = 0.5f + (0.5f * logo_eased);
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size * (1.0f - scale_amount) / 2.0f), 
+						                     base_logo_y + (fixed_logo_size * (1.0f - scale_amount) / 2.0f), 0.0f);
+						gs_matrix_scale3f(scale_amount, scale_amount, 1.0f);
+					}
+					break;
+					
+				case ANIM_SPIN:
+					{
+						// Spinning rotation with scale (720 degrees = 2 full rotations)
+						float rotation_angle = (1.0f - logo_eased) * 720.0f * (3.14159265f / 180.0f); // Convert to radians
+						float scale = 0.3f + (0.7f * logo_eased); // Scale from 30% to 100%
+						
+						// Move to center of logo
+						gs_matrix_translate3f(base_logo_x + (fixed_logo_size / 2.0f), 
+						                     base_logo_y + (fixed_logo_size / 2.0f), 0.0f);
+						// Rotate around center
+						gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, rotation_angle);
+						// Scale
+						gs_matrix_scale3f(scale, scale, 1.0f);
+						// Move back to corner for drawing
+						gs_matrix_translate3f(-(fixed_logo_size / 2.0f), -(fixed_logo_size / 2.0f), 0.0f);
+					}
+					break;
+					
+				case ANIM_SCROLL:
+					{
+						// Horizontal scroll from left with fade
+						float scroll_offset = -(float)fixed_width * 0.5f * (1.0f - logo_eased);
+						gs_matrix_translate3f(base_logo_x + scroll_offset, base_logo_y, 0.0f);
+					}
+					break;
+					
+				case ANIM_ROLL:
+					{
+						// Rolling tumble effect
+						float roll_angle = (1.0f - logo_eased) * 180.0f * (3.14159265f / 180.0f);
+						float roll_offset = -(float)fixed_width * 0.3f * (1.0f - logo_eased);
+						
+						gs_matrix_translate3f(base_logo_x + roll_offset + (fixed_logo_size / 2.0f), 
+						                     base_logo_y + (fixed_logo_size / 2.0f), 0.0f);
+						gs_matrix_rotaa4f(0.0f, 0.0f, 1.0f, roll_angle);
+						gs_matrix_translate3f(-(fixed_logo_size / 2.0f), -(fixed_logo_size / 2.0f), 0.0f);
+					}
+					break;
+					
+				case ANIM_INSTANT:
+				default:
+					// Instant appearance
+					gs_matrix_translate3f(base_logo_x, base_logo_y, 0.0f);
+					break;
+			}
 			
 			// Draw logo with custom alpha support
-			draw_logo_with_alpha(logo_image->texture, animated_logo_size, animated_logo_size, final_logo_alpha);
+			draw_logo_with_alpha(logo_image->texture, fixed_logo_size, fixed_logo_size, final_logo_alpha);
 			
 			gs_matrix_pop();
 		}
@@ -1270,22 +1483,159 @@ void lowerthirds_source::render()
 	// Use fixed pixel padding (not scaled)
 	float fixed_padding_horizontal = (float)padding_horizontal;
 	
-	// Modern dynamic text slide animation offsets
-	// Title: More dramatic entrance with overshoot feel (40px slide-up, 25px slide-right)
-	float fixed_title_offset_y = (1.0f - title_eased) * 40.0f;
-	float fixed_title_offset_x = (1.0f - title_eased) * 25.0f;
+	// Calculate animation-specific text transformations based on TEXT animation style
+	float fixed_title_offset_y = 0.0f;
+	float fixed_title_offset_x = 0.0f;
+	float fixed_subtitle_offset_y = 0.0f;
+	float fixed_subtitle_offset_x = 0.0f;
+	float title_scale = 1.0f;
+	float subtitle_scale = 1.0f;
 	
-	// Subtitle: Smooth flowing entrance (30px slide-up, 20px slide-right)
-	float fixed_subtitle_offset_y = (1.0f - subtitle_eased) * 30.0f;
-	float fixed_subtitle_offset_x = (1.0f - subtitle_eased) * 20.0f;
+	switch (text_animation_style) {
+		case ANIM_SLIDE_LEFT:
+			// Enhanced slide from left with subtle scale
+			fixed_title_offset_x = -(float)fixed_width * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * (1.0f - subtitle_eased);
+			title_scale = 0.92f + (0.08f * title_eased); // Subtle grow
+			subtitle_scale = 0.94f + (0.06f * subtitle_eased);
+			break;
+			
+		case ANIM_SLIDE_RIGHT:
+			// Enhanced slide from right with subtle scale
+			fixed_title_offset_x = (float)fixed_width * (1.0f - title_eased);
+			fixed_subtitle_offset_x = (float)fixed_width * (1.0f - subtitle_eased);
+			title_scale = 0.92f + (0.08f * title_eased);
+			subtitle_scale = 0.94f + (0.06f * subtitle_eased);
+			break;
+			
+		case ANIM_SLIDE_BOTTOM:
+			// Slide from bottom with anticipation
+			fixed_title_offset_y = (float)bar_height_pixels * 0.8f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = (float)bar_height_pixels * 0.8f * (1.0f - subtitle_eased);
+			title_scale = 0.90f + (0.10f * title_eased);
+			subtitle_scale = 0.92f + (0.08f * subtitle_eased);
+			break;
+			
+		case ANIM_SLIDE_TOP:
+			// Slide from top with anticipation
+			fixed_title_offset_y = -(float)bar_height_pixels * 0.8f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = -(float)bar_height_pixels * 0.8f * (1.0f - subtitle_eased);
+			title_scale = 0.90f + (0.10f * title_eased);
+			subtitle_scale = 0.92f + (0.08f * subtitle_eased);
+			break;
+			
+		case ANIM_ZOOM:
+			// Dramatic zoom with smooth deceleration
+			title_scale = 0.2f + (0.8f * title_eased);
+			subtitle_scale = 0.25f + (0.75f * subtitle_eased);
+			break;
+			
+		case ANIM_FADE:
+			// Pure fade with minimal scale
+			title_scale = 0.98f + (0.02f * title_eased);
+			subtitle_scale = 0.98f + (0.02f * subtitle_eased);
+			break;
+			
+		case ANIM_EXPAND_LEFT:
+			// Horizontal stretch from left - NO movement, just width expansion
+			title_scale = 0.5f + (0.5f * title_eased);
+			subtitle_scale = 0.5f + (0.5f * subtitle_eased);
+			// Offset to keep left edge anchored
+			fixed_title_offset_x = -(float)fixed_width * 0.25f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * 0.25f * (1.0f - subtitle_eased);
+			break;
+			
+		case ANIM_EXPAND_RIGHT:
+			// Horizontal stretch from right - NO movement, just width expansion
+			title_scale = 0.5f + (0.5f * title_eased);
+			subtitle_scale = 0.5f + (0.5f * subtitle_eased);
+			// Offset to keep right edge anchored
+			fixed_title_offset_x = (float)fixed_width * 0.25f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = (float)fixed_width * 0.25f * (1.0f - subtitle_eased);
+			break;
+			
+		case ANIM_PUSH_LEFT:
+			// Push from left - slide + perspective squeeze (both X and Y scale)
+			fixed_title_offset_x = -(float)fixed_width * 0.5f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * 0.5f * (1.0f - subtitle_eased);
+			title_scale = 0.65f + (0.35f * title_eased);
+			subtitle_scale = 0.68f + (0.32f * subtitle_eased);
+			// Add vertical offset for depth
+			fixed_title_offset_y = -15.0f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = -12.0f * (1.0f - subtitle_eased);
+			break;
+			
+		case ANIM_PUSH_RIGHT:
+			// Push from right - slide + perspective squeeze (both X and Y scale)
+			fixed_title_offset_x = (float)fixed_width * 0.5f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = (float)fixed_width * 0.5f * (1.0f - subtitle_eased);
+			title_scale = 0.65f + (0.35f * title_eased);
+			subtitle_scale = 0.68f + (0.32f * subtitle_eased);
+			// Add vertical offset for depth
+			fixed_title_offset_y = -15.0f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = -12.0f * (1.0f - subtitle_eased);
+			break;
+			
+		case ANIM_WIPE_LEFT:
+			// Wipe from left - smaller slide with diagonal feel
+			fixed_title_offset_x = -(float)fixed_width * 0.35f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * 0.35f * (1.0f - subtitle_eased);
+			fixed_title_offset_y = 25.0f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = 20.0f * (1.0f - subtitle_eased);
+			title_scale = 0.75f + (0.25f * title_eased);
+			subtitle_scale = 0.78f + (0.22f * subtitle_eased);
+			break;
+			
+		case ANIM_WIPE_RIGHT:
+			// Wipe from right - smaller slide with diagonal feel
+			fixed_title_offset_x = (float)fixed_width * 0.35f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = (float)fixed_width * 0.35f * (1.0f - subtitle_eased);
+			fixed_title_offset_y = 25.0f * (1.0f - title_eased);
+			fixed_subtitle_offset_y = 20.0f * (1.0f - subtitle_eased);
+			title_scale = 0.75f + (0.25f * title_eased);
+			subtitle_scale = 0.78f + (0.22f * subtitle_eased);
+			break;
+			
+		case ANIM_SPIN:
+			// Spin - dramatic zoom with rotation feel
+			title_scale = 0.4f + (0.6f * title_eased);
+			subtitle_scale = 0.45f + (0.55f * subtitle_eased);
+			// Slight circular offset
+			fixed_title_offset_x = -30.0f * (1.0f - title_eased);
+			fixed_title_offset_y = -20.0f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -28.0f * (1.0f - subtitle_eased);
+			fixed_subtitle_offset_y = -18.0f * (1.0f - subtitle_eased);
+			break;
+			
+		case ANIM_SCROLL:
+			// Smooth horizontal scroll - NO scale, pure movement
+			fixed_title_offset_x = -(float)fixed_width * 0.7f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * 0.7f * (1.0f - subtitle_eased);
+			title_scale = 1.0f;
+			subtitle_scale = 1.0f;
+			break;
+			
+		case ANIM_ROLL:
+			// Rolling tumble - slide with scale variation
+			fixed_title_offset_x = -(float)fixed_width * 0.6f * (1.0f - title_eased);
+			fixed_subtitle_offset_x = -(float)fixed_width * 0.6f * (1.0f - subtitle_eased);
+			// Bouncing scale effect
+			title_scale = 0.6f + (0.4f * title_eased);
+			subtitle_scale = 0.62f + (0.38f * subtitle_eased);
+			// Slight vertical bobbing
+			fixed_title_offset_y = 12.0f * sinf((1.0f - title_eased) * 3.14159f);
+			fixed_subtitle_offset_y = 10.0f * sinf((1.0f - subtitle_eased) * 3.14159f);
+			break;
+			
+		case ANIM_INSTANT:
+		default:
+			// Instant appearance
+			title_scale = 1.0f;
+			subtitle_scale = 1.0f;
+			break;
+	}
 	
-	// Add modern scale effect: text starts at 90% size and grows to 100%
-	// Title has subtle scale for dynamic feel
-	float title_scale = 0.90f + (0.10f * title_eased);
-	// Subtitle has subtle scale for coordinated flow
-	float subtitle_scale = 0.92f + (0.08f * subtitle_eased);
-	
-	// Draw title text (appears first with slide-up + slide-right + scale)
+	// Draw title text (appears first with animation)
 	if (title_text_source && title[current_profile] && strlen(title[current_profile]) > 0 && title_alpha > 0.01f) {
 		// Center text vertically in the bar (uses pixel values for stable position)
 		float title_y = center_offset + fixed_title_offset_y;
@@ -1310,7 +1660,7 @@ void lowerthirds_source::render()
 		gs_matrix_pop();
 	}
 	
-	// Draw subtitle text (appears after title with slide-up + slide-right + scale - staggered effect)
+	// Draw subtitle text (appears after title - staggered effect)
 	if (subtitle_text_source && subtitle[current_profile] && strlen(subtitle[current_profile]) > 0 && subtitle_alpha > 0.01f) {
 		// Keep subtitle below title, centered in the bar
 		float subtitle_y = center_offset + text_title_size + text_spacing + fixed_subtitle_offset_y;
@@ -1335,55 +1685,193 @@ void lowerthirds_source::render()
 		gs_matrix_pop();
 	}
 	
-	// === Draw RIGHT SIDE Text (Optional) ===
-	// Draw right title text (with modern scale animation)
-	if (title_right_text_source && title_right[current_profile] && strlen(title_right[current_profile]) > 0 && title_alpha > 0.01f) {
+	// === Draw RIGHT SIDE Text (Optional) - DELAYED APPEARANCE ===
+	// Calculate delayed animation offsets for right-side text (matches TEXT animation style)
+	float fixed_title_right_offset_y = 0.0f;
+	float fixed_title_right_offset_x = 0.0f;
+	float fixed_subtitle_right_offset_y = 0.0f;
+	float fixed_subtitle_right_offset_x = 0.0f;
+	float title_right_scale = 1.0f;
+	float subtitle_right_scale = 1.0f;
+	
+	switch (text_animation_style) {
+		case ANIM_SLIDE_LEFT:
+			fixed_title_right_offset_x = -(float)fixed_width * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = -(float)fixed_width * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.92f + (0.08f * title_right_eased);
+			subtitle_right_scale = 0.94f + (0.06f * subtitle_right_eased);
+			break;
+			
+		case ANIM_SLIDE_RIGHT:
+			fixed_title_right_offset_x = (float)fixed_width * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.92f + (0.08f * title_right_eased);
+			subtitle_right_scale = 0.94f + (0.06f * subtitle_right_eased);
+			break;
+			
+		case ANIM_SLIDE_BOTTOM:
+			fixed_title_right_offset_y = (float)bar_height_pixels * 0.8f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = (float)bar_height_pixels * 0.8f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.90f + (0.10f * title_right_eased);
+			subtitle_right_scale = 0.92f + (0.08f * subtitle_right_eased);
+			break;
+			
+		case ANIM_SLIDE_TOP:
+			fixed_title_right_offset_y = -(float)bar_height_pixels * 0.8f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = -(float)bar_height_pixels * 0.8f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.90f + (0.10f * title_right_eased);
+			subtitle_right_scale = 0.92f + (0.08f * subtitle_right_eased);
+			break;
+			
+		case ANIM_ZOOM:
+			title_right_scale = 0.2f + (0.8f * title_right_eased);
+			subtitle_right_scale = 0.25f + (0.75f * subtitle_right_eased);
+			break;
+			
+		case ANIM_FADE:
+			title_right_scale = 0.98f + (0.02f * title_right_eased);
+			subtitle_right_scale = 0.98f + (0.02f * subtitle_right_eased);
+			break;
+			
+		case ANIM_EXPAND_LEFT:
+			// Horizontal stretch from left - right text mimics left behavior
+			title_right_scale = 0.5f + (0.5f * title_right_eased);
+			subtitle_right_scale = 0.5f + (0.5f * subtitle_right_eased);
+			fixed_title_right_offset_x = -(float)fixed_width * 0.25f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = -(float)fixed_width * 0.25f * (1.0f - subtitle_right_eased);
+			break;
+			
+		case ANIM_EXPAND_RIGHT:
+			// Horizontal stretch from right - mirrors left text expansion
+			title_right_scale = 0.5f + (0.5f * title_right_eased);
+			subtitle_right_scale = 0.5f + (0.5f * subtitle_right_eased);
+			fixed_title_right_offset_x = (float)fixed_width * 0.25f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * 0.25f * (1.0f - subtitle_right_eased);
+			break;
+			
+		case ANIM_PUSH_LEFT:
+			// Push from left with perspective
+			fixed_title_right_offset_x = -(float)fixed_width * 0.5f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = -(float)fixed_width * 0.5f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.65f + (0.35f * title_right_eased);
+			subtitle_right_scale = 0.68f + (0.32f * subtitle_right_eased);
+			fixed_title_right_offset_y = -15.0f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = -12.0f * (1.0f - subtitle_right_eased);
+			break;
+			
+		case ANIM_PUSH_RIGHT:
+			// Push from right with perspective
+			fixed_title_right_offset_x = (float)fixed_width * 0.5f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * 0.5f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.65f + (0.35f * title_right_eased);
+			subtitle_right_scale = 0.68f + (0.32f * subtitle_right_eased);
+			fixed_title_right_offset_y = -15.0f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = -12.0f * (1.0f - subtitle_right_eased);
+			break;
+			
+		case ANIM_WIPE_LEFT:
+			// Wipe from left with diagonal
+			fixed_title_right_offset_x = -(float)fixed_width * 0.35f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = -(float)fixed_width * 0.35f * (1.0f - subtitle_right_eased);
+			fixed_title_right_offset_y = 25.0f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = 20.0f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.75f + (0.25f * title_right_eased);
+			subtitle_right_scale = 0.78f + (0.22f * subtitle_right_eased);
+			break;
+			
+		case ANIM_WIPE_RIGHT:
+			// Wipe from right with diagonal
+			fixed_title_right_offset_x = (float)fixed_width * 0.35f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * 0.35f * (1.0f - subtitle_right_eased);
+			fixed_title_right_offset_y = 25.0f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_y = 20.0f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.75f + (0.25f * title_right_eased);
+			subtitle_right_scale = 0.78f + (0.22f * subtitle_right_eased);
+			break;
+			
+		case ANIM_SPIN:
+			// Spin with dramatic zoom
+			title_right_scale = 0.4f + (0.6f * title_right_eased);
+			subtitle_right_scale = 0.45f + (0.55f * subtitle_right_eased);
+			fixed_title_right_offset_x = 30.0f * (1.0f - title_right_eased);
+			fixed_title_right_offset_y = -20.0f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = 28.0f * (1.0f - subtitle_right_eased);
+			fixed_subtitle_right_offset_y = -18.0f * (1.0f - subtitle_right_eased);
+			break;
+			
+		case ANIM_SCROLL:
+			// Smooth horizontal scroll from right
+			fixed_title_right_offset_x = (float)fixed_width * 0.7f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * 0.7f * (1.0f - subtitle_right_eased);
+			title_right_scale = 1.0f;
+			subtitle_right_scale = 1.0f;
+			break;
+			
+		case ANIM_ROLL:
+			// Rolling tumble from right
+			fixed_title_right_offset_x = (float)fixed_width * 0.6f * (1.0f - title_right_eased);
+			fixed_subtitle_right_offset_x = (float)fixed_width * 0.6f * (1.0f - subtitle_right_eased);
+			title_right_scale = 0.6f + (0.4f * title_right_eased);
+			subtitle_right_scale = 0.62f + (0.38f * subtitle_right_eased);
+			fixed_title_right_offset_y = 12.0f * sinf((1.0f - title_right_eased) * 3.14159f);
+			fixed_subtitle_right_offset_y = 10.0f * sinf((1.0f - subtitle_right_eased) * 3.14159f);
+			break;
+			
+		case ANIM_INSTANT:
+		default:
+			title_right_scale = 1.0f;
+			subtitle_right_scale = 1.0f;
+			break;
+	}
+	
+	// Draw right title text (with modern scale animation - DELAYED)
+	if (title_right_text_source && title_right[current_profile] && strlen(title_right[current_profile]) > 0 && title_right_alpha > 0.01f) {
 		// Get text width for right alignment (pixel values for stable position)
 		uint32_t title_right_width = obs_source_get_width(title_right_text_source);
-		float title_right_x = (float)fixed_width - (float)title_right_width - fixed_padding_horizontal - fixed_title_offset_x;
+		float title_right_x = (float)fixed_width - (float)title_right_width - fixed_padding_horizontal - fixed_title_right_offset_x;
 		// Keep right text centered vertically too (use fixed offset)
-		float title_right_y = center_offset + fixed_title_offset_y;
+		float title_right_y = center_offset + fixed_title_right_offset_y;
 		
 		gs_matrix_push();
 		gs_matrix_translate3f(title_right_x, title_right_y, 0.0f);
 		
 		// Apply modern scale animation for dynamic entrance
-		float final_scale = auto_scale ? (scale_factor * title_scale) : title_scale;
+		float final_scale = auto_scale ? (scale_factor * title_right_scale) : title_right_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
 		
 		// Apply professional fade with opacity
-		if (title_alpha < 1.0f) {
+		if (title_right_alpha < 1.0f) {
 			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
 			if (opacity_param)
-				gs_effect_set_float(opacity_param, title_alpha);
+				gs_effect_set_float(opacity_param, title_right_alpha);
 		}
 		
 		obs_source_video_render(title_right_text_source);
 		gs_matrix_pop();
 	}
 	
-	// Draw right subtitle text (with modern scale animation)
-	if (subtitle_right_text_source && subtitle_right[current_profile] && strlen(subtitle_right[current_profile]) > 0 && subtitle_alpha > 0.01f) {
+	// Draw right subtitle text (with modern scale animation - MORE DELAYED)
+	if (subtitle_right_text_source && subtitle_right[current_profile] && strlen(subtitle_right[current_profile]) > 0 && subtitle_right_alpha > 0.01f) {
 		// Get text width for right alignment (pixel values for stable position)
 		uint32_t subtitle_right_width = obs_source_get_width(subtitle_right_text_source);
-		float subtitle_right_x = (float)fixed_width - (float)subtitle_right_width - fixed_padding_horizontal - fixed_subtitle_offset_x;
+		float subtitle_right_x = (float)fixed_width - (float)subtitle_right_width - fixed_padding_horizontal - fixed_subtitle_right_offset_x;
 		// Keep right subtitle centered vertically (use fixed values)
-		float subtitle_right_y = center_offset + text_title_size + text_spacing + fixed_subtitle_offset_y;
+		float subtitle_right_y = center_offset + text_title_size + text_spacing + fixed_subtitle_right_offset_y;
 		
 		gs_matrix_push();
 		gs_matrix_translate3f(subtitle_right_x, subtitle_right_y, 0.0f);
 		
 		// Apply modern scale animation for smooth entrance
-		float final_scale = auto_scale ? (scale_factor * subtitle_scale) : subtitle_scale;
+		float final_scale = auto_scale ? (scale_factor * subtitle_right_scale) : subtitle_right_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
 		
 		// Apply professional fade with opacity
-		if (subtitle_alpha < 1.0f) {
+		if (subtitle_right_alpha < 1.0f) {
 			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
 			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
 			if (opacity_param)
-				gs_effect_set_float(opacity_param, subtitle_alpha);
+				gs_effect_set_float(opacity_param, subtitle_right_alpha);
 		}
 		
 		obs_source_video_render(subtitle_right_text_source);
