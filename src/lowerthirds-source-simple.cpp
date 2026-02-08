@@ -1847,13 +1847,24 @@ void lowerthirds_source::render()
 			
 			// Apply shadow opacity combined with text alpha
 			float shadow_opacity = (text_shadow_opacity / 100.0f) * title_alpha;
-			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
-			if (opacity_param)
-				gs_effect_set_float(opacity_param, shadow_opacity);
 			
-			// TODO: Apply shadow color modulation here if needed
+			// Apply shadow color (convert ABGR to packed RGBA uint32)
+			uint8_t shadow_r = (text_shadow_color >> 0) & 0xFF;
+			uint8_t shadow_g = (text_shadow_color >> 8) & 0xFF;
+			uint8_t shadow_b = (text_shadow_color >> 16) & 0xFF;
+			uint8_t shadow_a = (uint8_t)(shadow_opacity * 255.0f);
+			
+			// Pack into RGBA format (R in lowest byte)
+			uint32_t shadow_color_packed = (shadow_a << 24) | (shadow_b << 16) | (shadow_g << 8) | shadow_r;
+			
+			gs_enable_color(true, true, true, true);
+			gs_color(shadow_color_packed);
+			
 			obs_source_video_render(title_text_source);
+			
+			// Reset color modulation to white (fully opaque)
+			gs_color(0xFFFFFFFF);
+			
 			gs_matrix_pop();
 		}
 		
@@ -1906,12 +1917,24 @@ void lowerthirds_source::render()
 			
 			// Apply shadow opacity combined with text alpha
 			float shadow_opacity = (text_shadow_opacity / 100.0f) * subtitle_alpha;
-			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
-			if (opacity_param)
-				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			// Apply shadow color (convert ABGR to packed RGBA uint32)
+			uint8_t shadow_r = (text_shadow_color >> 0) & 0xFF;
+			uint8_t shadow_g = (text_shadow_color >> 8) & 0xFF;
+			uint8_t shadow_b = (text_shadow_color >> 16) & 0xFF;
+			uint8_t shadow_a = (uint8_t)(shadow_opacity * 255.0f);
+			
+			// Pack into RGBA format (R in lowest byte)
+			uint32_t shadow_color_packed = (shadow_a << 24) | (shadow_b << 16) | (shadow_g << 8) | shadow_r;
+			
+			gs_enable_color(true, true, true, true);
+			gs_color(shadow_color_packed);
 			
 			obs_source_video_render(subtitle_text_source);
+			
+			// Reset color modulation to white (fully opaque)
+			gs_color(0xFFFFFFFF);
+			
 			gs_matrix_pop();
 		}
 		
@@ -2101,12 +2124,24 @@ void lowerthirds_source::render()
 			
 			// Apply shadow opacity combined with text alpha
 			float shadow_opacity = (text_shadow_opacity / 100.0f) * title_right_alpha;
-			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
-			if (opacity_param)
-				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			// Apply shadow color (convert ABGR to packed RGBA uint32)
+			uint8_t shadow_r = (text_shadow_color >> 0) & 0xFF;
+			uint8_t shadow_g = (text_shadow_color >> 8) & 0xFF;
+			uint8_t shadow_b = (text_shadow_color >> 16) & 0xFF;
+			uint8_t shadow_a = (uint8_t)(shadow_opacity * 255.0f);
+			
+			// Pack into RGBA format (R in lowest byte)
+			uint32_t shadow_color_packed = (shadow_a << 24) | (shadow_b << 16) | (shadow_g << 8) | shadow_r;
+			
+			gs_enable_color(true, true, true, true);
+			gs_color(shadow_color_packed);
 			
 			obs_source_video_render(title_right_text_source);
+			
+			// Reset color modulation to white (fully opaque)
+			gs_color(0xFFFFFFFF);
+			
 			gs_matrix_pop();
 		}
 		
@@ -2157,12 +2192,24 @@ void lowerthirds_source::render()
 			
 			// Apply shadow opacity combined with text alpha
 			float shadow_opacity = (text_shadow_opacity / 100.0f) * subtitle_right_alpha;
-			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
-			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
-			if (opacity_param)
-				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			// Apply shadow color (convert ABGR to packed RGBA uint32)
+			uint8_t shadow_r = (text_shadow_color >> 0) & 0xFF;
+			uint8_t shadow_g = (text_shadow_color >> 8) & 0xFF;
+			uint8_t shadow_b = (text_shadow_color >> 16) & 0xFF;
+			uint8_t shadow_a = (uint8_t)(shadow_opacity * 255.0f);
+			
+			// Pack into RGBA format (R in lowest byte)
+			uint32_t shadow_color_packed = (shadow_a << 24) | (shadow_b << 16) | (shadow_g << 8) | shadow_r;
+			
+			gs_enable_color(true, true, true, true);
+			gs_color(shadow_color_packed);
 			
 			obs_source_video_render(subtitle_right_text_source);
+			
+			// Reset color modulation to white (fully opaque)
+			gs_color(0xFFFFFFFF);
+			
 			gs_matrix_pop();
 		}
 		
