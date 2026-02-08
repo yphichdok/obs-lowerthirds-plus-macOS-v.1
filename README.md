@@ -16,9 +16,11 @@ Professional lower thirds plugin with 5 tabbed profiles, 16 animation styles, an
 - **Independent Animations** - Separate animation controls for background, logo, and text
 - **Modern Animations** - Smooth 1.4-second animations with professional easing
 - **Full Customization** - Fonts, colors, sizes, logo, backgrounds
+- **Text Highlight Boxes** - Background boxes behind text with rounded corners, custom colors and opacity
 - **Shadow Effects** - Customizable shadows for text and logo with color, opacity, and offset controls
 - **Auto-Hide** - Automatically hides after set duration
-- **Preview Mode** - See live preview while editing
+- **Preview Mode** - Live preview that stays open while adjusting settings
+- **Professional Layout** - Organized by category (Animation, Text, Logo, Background, Layout)
 - **Logo Support** - Optional left-side logo with size and opacity controls
 - **Gradient Backgrounds** - 4 gradient directions or solid colors
 - **Background Images** - Custom PNG/JPG backgrounds
@@ -95,40 +97,46 @@ The DMG includes:
 
 ## 🎨 Customization Options
 
-### Text & Typography
+### 🎬 Animation Controls
+- **Background Animation** - 16 styles (slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant)
+- **Logo Animation** - Independent animation selection (16 styles)
+- **Text Animation** - Separate animation control (16 styles)
+- **Auto-Hide** - Automatic hide after duration (1-30 seconds)
+- **Duration** - Customizable display time
+- Professional easing curves (ease-out-expo, ease-in-out-quint)
+
+### ✏️ Text Styling
 - System font selector
 - Title size: 20-120px (default: 72px)
 - Subtitle size: 16-100px (default: 48px)
 - Text color picker
 - Bold toggle
-- **Shadow effects** with color, opacity, and offset controls
 
-### Background
-- Solid color or gradient
-- 4 gradient directions (horizontal, vertical, diagonal)
-- Custom background image (PNG, JPG, BMP)
-- Opacity control (0-100%)
-- Toggle background on/off
+### ✨ Text Effects
+- **Shadow** - Enable/disable, color, opacity (0-100%), X/Y offset (-20 to +20px)
+- **Highlight Box** - Background box behind text with:
+  - Custom color and opacity (0-100%)
+  - Rounded corners (0-50px radius)
+  - Adjustable padding (horizontal and vertical)
 
-### Logo
-- Custom logo image (PNG, JPG, BMP)
-- Size control: 140px default
+### 🖼️ Logo Settings
+- Custom logo image (PNG, JPG, BMP, SVG)
+- Size control: 30-200px (default: 140px)
 - Opacity: 0-100%
 - Padding controls (horizontal, vertical)
 - Auto-center vertically
 - **Shadow effects** with color, opacity, and offset controls
 
-### Layout
+### 🎨 Background Styling
+- Toggle background on/off
+- Solid color or gradient (4 directions)
+- Custom background image (PNG, JPG, BMP)
+- Opacity control (0-100%)
+
+### 📐 Layout & Positioning
 - Bar height: 80-300px (default: 200px)
 - Text padding: horizontal and vertical
 - Auto-scale option (OFF by default for stability)
-
-### Animation
-- 16 different animation styles (slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant)
-- Independent animation selection for background, logo, and text
-- 1.4 second smooth duration
-- Professional easing curves (ease-out-expo, ease-in-out-quint)
-- Auto-hide after duration (1-30 seconds)
 
 ---
 
@@ -260,11 +268,13 @@ brew install cmake
 - Modern smooth animations (1.4s duration) with staggered element timing
 - Full text customization with system fonts
 - **Shadow effects for text and logo** with customizable color, opacity, and offset
+- **Text highlight boxes** with rounded corners, custom colors, and opacity
 - Logo support (left side, optional) with independent animation and spin effect
 - Background images and gradients
 - Right-side text fields (optional)
-- Preview mode for live editing
+- Preview mode that stays open during configuration
 - Auto-hide functionality
+- **Professional layout** organized by category (Animation, Text Effects, Logo, Background, Layout)
 - Fixed profile switching behavior
 - Color picker accuracy fix (ABGR format)
 - Stable text/logo positioning on resize

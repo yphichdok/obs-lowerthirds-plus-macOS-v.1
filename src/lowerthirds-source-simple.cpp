@@ -194,6 +194,14 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "logo_shadow_opacity", 75);
 	obs_data_set_default_int(settings, "logo_shadow_offset_x", 3);
 	obs_data_set_default_int(settings, "logo_shadow_offset_y", 3);
+	
+	// Text highlight defaults
+	obs_data_set_default_bool(settings, "text_highlight_enabled", false);
+	obs_data_set_default_int(settings, "text_highlight_color", 0xFF000000); // Black (ABGR format)
+	obs_data_set_default_int(settings, "text_highlight_opacity", 80);
+	obs_data_set_default_int(settings, "text_highlight_corner_radius", 8);
+	obs_data_set_default_int(settings, "text_highlight_padding_horizontal", 20);
+	obs_data_set_default_int(settings, "text_highlight_padding_vertical", 10);
 }
 
 // Button callback for Play Profile 1
@@ -371,9 +379,15 @@ static bool lowerthirds_preview_toggled(obs_properties_t *props, obs_property_t 
 	UNUSED_PARAMETER(props);
 	UNUSED_PARAMETER(property);
 	
-	// When preview is enabled, force the lower third to show
+	// When preview is enabled, force the lower third to show and reset animation
 	bool preview_enabled = obs_data_get_bool(settings, "preview_mode");
 	obs_data_set_bool(settings, "visible", preview_enabled);
+	
+	// If enabling preview, trigger a fresh animation
+	if (preview_enabled) {
+		// This will be handled by the update() function to show fresh content
+		// Preview mode keeps it visible indefinitely for configuration
+	}
 	
 	return true;
 }
@@ -420,46 +434,67 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	snprintf(button_label, sizeof(button_label), "[▶ %s]", title5);
 	obs_properties_add_button2(props, "play_profile5", button_label, lowerthirds_play_profile5_clicked, data);
 	
-	// === TAB CONTENT (all 5 tabs always visible) ===
+	// === TAB PROFILES (Professional Organization) ===
 	
-	// TAB 1
-	obs_properties_add_text(props, "profile1_title", "Tab 1 · Title", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile1_subtitle", "Tab 1 · Subtitle", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile1_title_right", "Tab 1 · Title (Right)", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile1_subtitle_right", "Tab 1 · Subtitle (Right)", OBS_TEXT_DEFAULT);
+	// TAB 1 GROUP
+	obs_properties_t *tab1_group = obs_properties_create();
+	obs_properties_add_text(tab1_group, "profile1_title", "Left Title", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab1_group, "profile1_subtitle", "Left Subtitle", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab1_group, "profile1_title_right", "Right Title (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab1_group, "profile1_subtitle_right", "Right Subtitle (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_group(props, "tab1_content", "📝 Tab 1 Content", 
+		OBS_GROUP_NORMAL, tab1_group);
 	
-	// TAB 2
-	obs_properties_add_text(props, "profile2_title", "Tab 2 · Title", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile2_subtitle", "Tab 2 · Subtitle", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile2_title_right", "Tab 2 · Title (Right)", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile2_subtitle_right", "Tab 2 · Subtitle (Right)", OBS_TEXT_DEFAULT);
+	// TAB 2 GROUP
+	obs_properties_t *tab2_group = obs_properties_create();
+	obs_properties_add_text(tab2_group, "profile2_title", "Left Title", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab2_group, "profile2_subtitle", "Left Subtitle", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab2_group, "profile2_title_right", "Right Title (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab2_group, "profile2_subtitle_right", "Right Subtitle (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_group(props, "tab2_content", "📝 Tab 2 Content", 
+		OBS_GROUP_NORMAL, tab2_group);
 	
-	// TAB 3
-	obs_properties_add_text(props, "profile3_title", "Tab 3 · Title", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile3_subtitle", "Tab 3 · Subtitle", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile3_title_right", "Tab 3 · Title (Right)", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile3_subtitle_right", "Tab 3 · Subtitle (Right)", OBS_TEXT_DEFAULT);
+	// TAB 3 GROUP
+	obs_properties_t *tab3_group = obs_properties_create();
+	obs_properties_add_text(tab3_group, "profile3_title", "Left Title", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab3_group, "profile3_subtitle", "Left Subtitle", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab3_group, "profile3_title_right", "Right Title (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab3_group, "profile3_subtitle_right", "Right Subtitle (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_group(props, "tab3_content", "📝 Tab 3 Content", 
+		OBS_GROUP_NORMAL, tab3_group);
 	
-	// TAB 4
-	obs_properties_add_text(props, "profile4_title", "Tab 4 · Title", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile4_subtitle", "Tab 4 · Subtitle", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile4_title_right", "Tab 4 · Title (Right)", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile4_subtitle_right", "Tab 4 · Subtitle (Right)", OBS_TEXT_DEFAULT);
+	// TAB 4 GROUP
+	obs_properties_t *tab4_group = obs_properties_create();
+	obs_properties_add_text(tab4_group, "profile4_title", "Left Title", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab4_group, "profile4_subtitle", "Left Subtitle", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab4_group, "profile4_title_right", "Right Title (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab4_group, "profile4_subtitle_right", "Right Subtitle (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_group(props, "tab4_content", "📝 Tab 4 Content", 
+		OBS_GROUP_NORMAL, tab4_group);
 	
-	// TAB 5
-	obs_properties_add_text(props, "profile5_title", "Tab 5 · Title", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile5_subtitle", "Tab 5 · Subtitle", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile5_title_right", "Tab 5 · Title (Right)", OBS_TEXT_DEFAULT);
-	obs_properties_add_text(props, "profile5_subtitle_right", "Tab 5 · Subtitle (Right)", OBS_TEXT_DEFAULT);
+	// TAB 5 GROUP
+	obs_properties_t *tab5_group = obs_properties_create();
+	obs_properties_add_text(tab5_group, "profile5_title", "Left Title", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab5_group, "profile5_subtitle", "Left Subtitle", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab5_group, "profile5_title_right", "Right Title (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_text(tab5_group, "profile5_subtitle_right", "Right Subtitle (Optional)", OBS_TEXT_DEFAULT);
+	obs_properties_add_group(props, "tab5_content", "📝 Tab 5 Content", 
+		OBS_GROUP_NORMAL, tab5_group);
 	
 	// === ADVANCED SETTINGS (COLLAPSIBLE) ===
 	obs_properties_t *advanced_group = obs_properties_create();
 	
-	// PLAYBACK CONTROLS
-	obs_properties_add_bool(advanced_group, "auto_hide", "Auto-Hide After Duration");
-	obs_properties_add_float_slider(advanced_group, "duration", "Duration (seconds)", 1.0, 30.0, 0.5);
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 1: ANIMATION CONTROLS
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *animation_group = obs_properties_create();
 	
-	obs_property_t *anim_list = obs_properties_add_list(advanced_group, "animation_style", 
+	// Playback settings
+	obs_properties_add_bool(animation_group, "auto_hide", "Auto-Hide After Duration");
+	obs_properties_add_float_slider(animation_group, "duration", "Duration (seconds)", 1.0, 30.0, 0.5);
+	
+	// Background animation
+	obs_property_t *anim_list = obs_properties_add_list(animation_group, "animation_style", 
 		"Background Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
 	obs_property_list_add_int(anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
@@ -478,7 +513,8 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_property_list_add_int(anim_list, "⟲ Roll", ANIM_ROLL);
 	obs_property_list_add_int(anim_list, "⚡ Instant", ANIM_INSTANT);
 	
-	obs_property_t *logo_anim_list = obs_properties_add_list(advanced_group, "logo_animation_style", 
+	// Logo animation
+	obs_property_t *logo_anim_list = obs_properties_add_list(animation_group, "logo_animation_style", 
 		"Logo Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(logo_anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
 	obs_property_list_add_int(logo_anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
@@ -497,7 +533,8 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_property_list_add_int(logo_anim_list, "⟲ Roll", ANIM_ROLL);
 	obs_property_list_add_int(logo_anim_list, "⚡ Instant", ANIM_INSTANT);
 	
-	obs_property_t *text_anim_list = obs_properties_add_list(advanced_group, "text_animation_style", 
+	// Text animation
+	obs_property_t *text_anim_list = obs_properties_add_list(animation_group, "text_animation_style", 
 		"Text Animation", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(text_anim_list, "↖ Slide from Left", ANIM_SLIDE_LEFT);
 	obs_property_list_add_int(text_anim_list, "↗ Slide from Right", ANIM_SLIDE_RIGHT);
@@ -516,41 +553,78 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_property_list_add_int(text_anim_list, "⟲ Roll", ANIM_ROLL);
 	obs_property_list_add_int(text_anim_list, "⚡ Instant", ANIM_INSTANT);
 	
-	// TEXT STYLING
-	obs_properties_add_font(advanced_group, "font_face", "Font");
-	obs_properties_add_bool(advanced_group, "bold", "Bold");
-	obs_properties_add_int_slider(advanced_group, "title_size", "Title Size (px)", 20, 120, 2);
-	obs_properties_add_int_slider(advanced_group, "subtitle_size", "Subtitle Size (px)", 16, 100, 2);
-	obs_properties_add_color(advanced_group, "text_color", "Text Color");
+	obs_properties_add_group(advanced_group, "animation_controls", "🎬 Animation Controls", 
+		OBS_GROUP_NORMAL, animation_group);
 	
-	// TEXT SHADOW
-	obs_properties_add_bool(advanced_group, "text_shadow_enabled", "🌑 Enable Text Shadow");
-	obs_properties_add_color(advanced_group, "text_shadow_color", "   Shadow Color");
-	obs_properties_add_int_slider(advanced_group, "text_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
-	obs_properties_add_int_slider(advanced_group, "text_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
-	obs_properties_add_int_slider(advanced_group, "text_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 2: TEXT STYLING
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *text_style_group = obs_properties_create();
 	
-	// LOGO (LEFT SIDE - OPTIONAL)
-	obs_properties_add_path(advanced_group, "logo_image", "Logo Image (Optional)", 
+	obs_properties_add_font(text_style_group, "font_face", "Font");
+	obs_properties_add_bool(text_style_group, "bold", "Bold");
+	obs_properties_add_int_slider(text_style_group, "title_size", "Title Size (px)", 20, 120, 2);
+	obs_properties_add_int_slider(text_style_group, "subtitle_size", "Subtitle Size (px)", 16, 100, 2);
+	obs_properties_add_color(text_style_group, "text_color", "Text Color");
+	
+	obs_properties_add_group(advanced_group, "text_styling", "✏️ Text Styling", 
+		OBS_GROUP_NORMAL, text_style_group);
+	
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 3: TEXT EFFECTS
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *text_effects_group = obs_properties_create();
+	
+	// Shadow
+	obs_properties_add_bool(text_effects_group, "text_shadow_enabled", "🌑 Enable Text Shadow");
+	obs_properties_add_color(text_effects_group, "text_shadow_color", "   Shadow Color");
+	obs_properties_add_int_slider(text_effects_group, "text_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(text_effects_group, "text_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
+	obs_properties_add_int_slider(text_effects_group, "text_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
+	
+	// Highlight/Background
+	obs_properties_add_bool(text_effects_group, "text_highlight_enabled", "🎨 Enable Text Highlight (Background Box)");
+	obs_properties_add_color(text_effects_group, "text_highlight_color", "   Highlight Color");
+	obs_properties_add_int_slider(text_effects_group, "text_highlight_opacity", "   Highlight Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(text_effects_group, "text_highlight_corner_radius", "   Corner Radius (px)", 0, 50, 1);
+	obs_properties_add_int_slider(text_effects_group, "text_highlight_padding_horizontal", "   Padding Horizontal (px)", 0, 100, 2);
+	obs_properties_add_int_slider(text_effects_group, "text_highlight_padding_vertical", "   Padding Vertical (px)", 0, 50, 2);
+	
+	obs_properties_add_group(advanced_group, "text_effects", "✨ Text Effects", 
+		OBS_GROUP_NORMAL, text_effects_group);
+	
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 4: LOGO SETTINGS
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *logo_group = obs_properties_create();
+	
+	obs_properties_add_path(logo_group, "logo_image", "Logo Image (Optional)", 
 		OBS_PATH_FILE, "Image Files (*.png *.jpg *.jpeg *.bmp *.svg);;All Files (*.*)", NULL);
-	obs_properties_add_int_slider(advanced_group, "logo_size", "Logo Size (px)", 30, 200, 5);
-	obs_properties_add_int_slider(advanced_group, "logo_opacity", "Logo Opacity (%)", 0, 100, 1);
-	obs_properties_add_int_slider(advanced_group, "logo_padding_horizontal", "Logo Padding (Left/Right)", 0, 200, 5);
-	obs_properties_add_int_slider(advanced_group, "logo_padding_vertical", "Logo Padding (Top/Bottom)", 0, 100, 5);
+	obs_properties_add_int_slider(logo_group, "logo_size", "Logo Size (px)", 30, 200, 5);
+	obs_properties_add_int_slider(logo_group, "logo_opacity", "Logo Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(logo_group, "logo_padding_horizontal", "Logo Padding (Left/Right)", 0, 200, 5);
+	obs_properties_add_int_slider(logo_group, "logo_padding_vertical", "Logo Padding (Top/Bottom)", 0, 100, 5);
 	
-	// LOGO SHADOW
-	obs_properties_add_bool(advanced_group, "logo_shadow_enabled", "🌑 Enable Logo Shadow");
-	obs_properties_add_color(advanced_group, "logo_shadow_color", "   Shadow Color");
-	obs_properties_add_int_slider(advanced_group, "logo_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
-	obs_properties_add_int_slider(advanced_group, "logo_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
-	obs_properties_add_int_slider(advanced_group, "logo_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
+	// Logo shadow
+	obs_properties_add_bool(logo_group, "logo_shadow_enabled", "🌑 Enable Logo Shadow");
+	obs_properties_add_color(logo_group, "logo_shadow_color", "   Shadow Color");
+	obs_properties_add_int_slider(logo_group, "logo_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(logo_group, "logo_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
+	obs_properties_add_int_slider(logo_group, "logo_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
 	
-	// BACKGROUND STYLING
-	obs_properties_add_bool(advanced_group, "show_background", "☑️ Show Background (OFF = Text & Logo Only)");
-	obs_properties_add_color(advanced_group, "bg_color", "Background Color");
-	obs_properties_add_int_slider(advanced_group, "opacity", "Opacity (%)", 0, 100, 1);
+	obs_properties_add_group(advanced_group, "logo_settings", "🖼️ Logo Settings", 
+		OBS_GROUP_NORMAL, logo_group);
 	
-	obs_property_t *gradient_list = obs_properties_add_list(advanced_group, "gradient_type", 
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 5: BACKGROUND STYLING
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *background_group = obs_properties_create();
+	
+	obs_properties_add_bool(background_group, "show_background", "☑️ Show Background");
+	obs_properties_add_color(background_group, "bg_color", "Background Color");
+	obs_properties_add_int_slider(background_group, "opacity", "Opacity (%)", 0, 100, 1);
+	
+	obs_property_t *gradient_list = obs_properties_add_list(background_group, "gradient_type", 
 		"Gradient Style", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
 	obs_property_list_add_int(gradient_list, "None", GRADIENT_NONE);
 	obs_property_list_add_int(gradient_list, "Horizontal →", GRADIENT_HORIZONTAL);
@@ -558,15 +632,25 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_property_list_add_int(gradient_list, "Diagonal ↘", GRADIENT_DIAGONAL_TL_BR);
 	obs_property_list_add_int(gradient_list, "Diagonal ↗", GRADIENT_DIAGONAL_BL_TR);
 	
-	obs_properties_add_color(advanced_group, "gradient_color2", "Gradient End Color");
-	obs_properties_add_path(advanced_group, "bg_image", "Background Image (Optional)", 
+	obs_properties_add_color(background_group, "gradient_color2", "Gradient End Color");
+	obs_properties_add_path(background_group, "bg_image", "Background Image (Optional)", 
 		OBS_PATH_FILE, "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*.*)", NULL);
 	
-	// LAYOUT & POSITIONING
-	obs_properties_add_int_slider(advanced_group, "bar_height", "Bar Height (px)", 80, 300, 10);
-	obs_properties_add_int_slider(advanced_group, "padding_horizontal", "Text Padding (Left/Right)", 0, 300, 5);
-	obs_properties_add_int_slider(advanced_group, "padding_vertical", "Text Padding (Top/Bottom)", 0, 150, 5);
-	obs_properties_add_bool(advanced_group, "auto_scale", "Auto-Scale (OFF = Text Stays Original Size)");
+	obs_properties_add_group(advanced_group, "background_styling", "🎨 Background Styling", 
+		OBS_GROUP_NORMAL, background_group);
+	
+	// ═══════════════════════════════════════════════════════════════════════════
+	// CATEGORY 6: LAYOUT & POSITIONING
+	// ═══════════════════════════════════════════════════════════════════════════
+	obs_properties_t *layout_group = obs_properties_create();
+	
+	obs_properties_add_int_slider(layout_group, "bar_height", "Bar Height (px)", 80, 300, 10);
+	obs_properties_add_int_slider(layout_group, "padding_horizontal", "Text Padding (Left/Right)", 0, 300, 5);
+	obs_properties_add_int_slider(layout_group, "padding_vertical", "Text Padding (Top/Bottom)", 0, 150, 5);
+	obs_properties_add_bool(layout_group, "auto_scale", "Auto-Scale (OFF = Text Stays Original Size)");
+	
+	obs_properties_add_group(advanced_group, "layout_settings", "📐 Layout & Positioning", 
+		OBS_GROUP_NORMAL, layout_group);
 	
 	// Add the collapsible group to main properties
 	obs_properties_add_group(props, "advanced_settings", "⚙️ Advanced Settings", 
@@ -612,6 +696,12 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, logo_shadow_opacity(75)
 	, logo_shadow_offset_x(3)
 	, logo_shadow_offset_y(3)
+	, text_highlight_enabled(false)
+	, text_highlight_color(0xFF000000)  // Black
+	, text_highlight_opacity(80)
+	, text_highlight_corner_radius(8)
+	, text_highlight_padding_horizontal(20)
+	, text_highlight_padding_vertical(10)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
 	, auto_scale(false)  // OFF by default - keeps consistent pixel sizes
@@ -625,6 +715,7 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, display_duration(5.0f)
 	, display_timer(0.0f)
 	, force_replay(false)
+	, preview_mode(false)
 {
 	// Create UNIQUE text sources for this instance (prevents conflicts when duplicating)
 	// Use source pointer to ensure unique names for each duplicated instance
@@ -865,6 +956,17 @@ void lowerthirds_source::update(obs_data_t *settings)
 	logo_shadow_offset_x = (int)obs_data_get_int(settings, "logo_shadow_offset_x");
 	logo_shadow_offset_y = (int)obs_data_get_int(settings, "logo_shadow_offset_y");
 	
+	// Text highlight settings
+	text_highlight_enabled = obs_data_get_bool(settings, "text_highlight_enabled");
+	text_highlight_color = (uint32_t)obs_data_get_int(settings, "text_highlight_color");
+	text_highlight_opacity = (int)obs_data_get_int(settings, "text_highlight_opacity");
+	text_highlight_corner_radius = (int)obs_data_get_int(settings, "text_highlight_corner_radius");
+	text_highlight_padding_horizontal = (int)obs_data_get_int(settings, "text_highlight_padding_horizontal");
+	text_highlight_padding_vertical = (int)obs_data_get_int(settings, "text_highlight_padding_vertical");
+	
+	// Load preview mode
+	preview_mode = obs_data_get_bool(settings, "preview_mode");
+	
 	bool new_visible = obs_data_get_bool(settings, "visible");
 	auto_hide_enabled = obs_data_get_bool(settings, "auto_hide");
 	display_duration = (float)obs_data_get_double(settings, "duration");
@@ -913,15 +1015,6 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
 		
-		// Shadow settings
-		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
-		if (text_shadow_enabled) {
-			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
-			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y)); // Use Y offset as shadow size
-			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
-			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
-		}
-		
 		obs_source_update(title_text_source, text_settings);
 		obs_data_release(text_settings);
 	}
@@ -939,15 +1032,6 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_int(font_obj, "flags", 0); // Normal weight
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
-		
-		// Shadow settings
-		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
-		if (text_shadow_enabled) {
-			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
-			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
-			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
-			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
-		}
 		
 		obs_source_update(subtitle_text_source, text_settings);
 		obs_data_release(text_settings);
@@ -968,15 +1052,6 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
 		
-		// Shadow settings
-		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
-		if (text_shadow_enabled) {
-			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
-			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
-			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
-			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
-		}
-		
 		obs_source_update(title_right_text_source, text_settings);
 		obs_data_release(text_settings);
 	}
@@ -996,15 +1071,6 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
 		
-		// Shadow settings
-		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
-		if (text_shadow_enabled) {
-			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
-			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
-			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
-			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
-		}
-		
 		obs_source_update(subtitle_right_text_source, text_settings);
 		obs_data_release(text_settings);
 	}
@@ -1023,8 +1089,8 @@ void lowerthirds_source::tick(float seconds)
 			animation_progress = 0.0f;
 	}
 	
-	// Auto-hide timer
-	if (is_visible && auto_hide_enabled) {
+	// Auto-hide timer (but NOT in preview mode - preview stays visible for configuration)
+	if (is_visible && auto_hide_enabled && !preview_mode) {
 		display_timer += seconds;
 		
 		// When duration reached, automatically hide
@@ -1038,6 +1104,11 @@ void lowerthirds_source::tick(float seconds)
 			obs_source_update(source, settings);
 			obs_data_release(settings);
 		}
+	}
+	
+	// Reset timer when in preview mode to ensure smooth restart when preview is disabled
+	if (preview_mode && display_timer > 0.0f) {
+		display_timer = 0.0f;
 	}
 }
 
@@ -1745,12 +1816,46 @@ void lowerthirds_source::render()
 		float title_y = center_offset + fixed_title_offset_y;
 		float title_x = fixed_padding_horizontal + logo_width_with_padding + fixed_title_offset_x;
 		
+		// Draw text highlight/background box (if enabled) - BEFORE text
+		if (text_highlight_enabled) {
+			uint32_t text_width = obs_source_get_width(title_text_source);
+			uint32_t text_height = obs_source_get_height(title_text_source);
+			
+			if (text_width > 0 && text_height > 0) {
+				float box_x = title_x - (float)text_highlight_padding_horizontal;
+				float box_y = title_y - (float)text_highlight_padding_vertical;
+				float box_width = (float)text_width + 2.0f * (float)text_highlight_padding_horizontal;
+				float box_height = (float)text_height + 2.0f * (float)text_highlight_padding_vertical;
+				float highlight_opacity = (text_highlight_opacity / 100.0f) * title_alpha;
+				
+				draw_rounded_rect(box_x, box_y, box_width, box_height, 
+					(float)text_highlight_corner_radius, text_highlight_color, highlight_opacity);
+			}
+		}
+		
 		gs_matrix_push();
 		gs_matrix_translate3f(title_x, title_y, 0.0f);
 		
 		// Apply modern scale animation for dynamic entrance
 		float final_scale = auto_scale ? (scale_factor * title_scale) : title_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
+		
+		// Render text shadow first (if enabled)
+		if (text_shadow_enabled) {
+			gs_matrix_push();
+			gs_matrix_translate3f((float)text_shadow_offset_x, (float)text_shadow_offset_y, 0.0f);
+			
+			// Apply shadow opacity combined with text alpha
+			float shadow_opacity = (text_shadow_opacity / 100.0f) * title_alpha;
+			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
+			if (opacity_param)
+				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			// TODO: Apply shadow color modulation here if needed
+			obs_source_video_render(title_text_source);
+			gs_matrix_pop();
+		}
 		
 		// Apply professional fade with opacity
 		if (title_alpha < 1.0f) {
@@ -1770,12 +1875,45 @@ void lowerthirds_source::render()
 		float subtitle_y = center_offset + text_title_size + text_spacing + fixed_subtitle_offset_y;
 		float subtitle_x = fixed_padding_horizontal + logo_width_with_padding + fixed_subtitle_offset_x;
 		
+		// Draw text highlight/background box (if enabled) - BEFORE text
+		if (text_highlight_enabled) {
+			uint32_t text_width = obs_source_get_width(subtitle_text_source);
+			uint32_t text_height = obs_source_get_height(subtitle_text_source);
+			
+			if (text_width > 0 && text_height > 0) {
+				float box_x = subtitle_x - (float)text_highlight_padding_horizontal;
+				float box_y = subtitle_y - (float)text_highlight_padding_vertical;
+				float box_width = (float)text_width + 2.0f * (float)text_highlight_padding_horizontal;
+				float box_height = (float)text_height + 2.0f * (float)text_highlight_padding_vertical;
+				float highlight_opacity = (text_highlight_opacity / 100.0f) * subtitle_alpha;
+				
+				draw_rounded_rect(box_x, box_y, box_width, box_height, 
+					(float)text_highlight_corner_radius, text_highlight_color, highlight_opacity);
+			}
+		}
+		
 		gs_matrix_push();
 		gs_matrix_translate3f(subtitle_x, subtitle_y, 0.0f);
 		
 		// Apply modern scale animation for smooth entrance
 		float final_scale = auto_scale ? (scale_factor * subtitle_scale) : subtitle_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
+		
+		// Render text shadow first (if enabled)
+		if (text_shadow_enabled) {
+			gs_matrix_push();
+			gs_matrix_translate3f((float)text_shadow_offset_x, (float)text_shadow_offset_y, 0.0f);
+			
+			// Apply shadow opacity combined with text alpha
+			float shadow_opacity = (text_shadow_opacity / 100.0f) * subtitle_alpha;
+			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
+			if (opacity_param)
+				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			obs_source_video_render(subtitle_text_source);
+			gs_matrix_pop();
+		}
 		
 		// Apply professional fade with opacity
 		if (subtitle_alpha < 1.0f) {
@@ -1932,9 +2070,22 @@ void lowerthirds_source::render()
 	if (title_right_text_source && title_right[current_profile] && strlen(title_right[current_profile]) > 0 && title_right_alpha > 0.01f) {
 		// Get text width for right alignment (pixel values for stable position)
 		uint32_t title_right_width = obs_source_get_width(title_right_text_source);
+		uint32_t title_right_height = obs_source_get_height(title_right_text_source);
 		float title_right_x = (float)fixed_width - (float)title_right_width - fixed_padding_horizontal - fixed_title_right_offset_x;
 		// Keep right text centered vertically too (use fixed offset)
 		float title_right_y = center_offset + fixed_title_right_offset_y;
+		
+		// Draw text highlight/background box (if enabled) - BEFORE text
+		if (text_highlight_enabled && title_right_width > 0 && title_right_height > 0) {
+			float box_x = title_right_x - (float)text_highlight_padding_horizontal;
+			float box_y = title_right_y - (float)text_highlight_padding_vertical;
+			float box_width = (float)title_right_width + 2.0f * (float)text_highlight_padding_horizontal;
+			float box_height = (float)title_right_height + 2.0f * (float)text_highlight_padding_vertical;
+			float highlight_opacity = (text_highlight_opacity / 100.0f) * title_right_alpha;
+			
+			draw_rounded_rect(box_x, box_y, box_width, box_height, 
+				(float)text_highlight_corner_radius, text_highlight_color, highlight_opacity);
+		}
 		
 		gs_matrix_push();
 		gs_matrix_translate3f(title_right_x, title_right_y, 0.0f);
@@ -1942,6 +2093,22 @@ void lowerthirds_source::render()
 		// Apply modern scale animation for dynamic entrance
 		float final_scale = auto_scale ? (scale_factor * title_right_scale) : title_right_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
+		
+		// Render text shadow first (if enabled)
+		if (text_shadow_enabled) {
+			gs_matrix_push();
+			gs_matrix_translate3f((float)text_shadow_offset_x, (float)text_shadow_offset_y, 0.0f);
+			
+			// Apply shadow opacity combined with text alpha
+			float shadow_opacity = (text_shadow_opacity / 100.0f) * title_right_alpha;
+			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
+			if (opacity_param)
+				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			obs_source_video_render(title_right_text_source);
+			gs_matrix_pop();
+		}
 		
 		// Apply professional fade with opacity
 		if (title_right_alpha < 1.0f) {
@@ -1959,9 +2126,22 @@ void lowerthirds_source::render()
 	if (subtitle_right_text_source && subtitle_right[current_profile] && strlen(subtitle_right[current_profile]) > 0 && subtitle_right_alpha > 0.01f) {
 		// Get text width for right alignment (pixel values for stable position)
 		uint32_t subtitle_right_width = obs_source_get_width(subtitle_right_text_source);
+		uint32_t subtitle_right_height = obs_source_get_height(subtitle_right_text_source);
 		float subtitle_right_x = (float)fixed_width - (float)subtitle_right_width - fixed_padding_horizontal - fixed_subtitle_right_offset_x;
 		// Keep right subtitle centered vertically (use fixed values)
 		float subtitle_right_y = center_offset + text_title_size + text_spacing + fixed_subtitle_right_offset_y;
+		
+		// Draw text highlight/background box (if enabled) - BEFORE text
+		if (text_highlight_enabled && subtitle_right_width > 0 && subtitle_right_height > 0) {
+			float box_x = subtitle_right_x - (float)text_highlight_padding_horizontal;
+			float box_y = subtitle_right_y - (float)text_highlight_padding_vertical;
+			float box_width = (float)subtitle_right_width + 2.0f * (float)text_highlight_padding_horizontal;
+			float box_height = (float)subtitle_right_height + 2.0f * (float)text_highlight_padding_vertical;
+			float highlight_opacity = (text_highlight_opacity / 100.0f) * subtitle_right_alpha;
+			
+			draw_rounded_rect(box_x, box_y, box_width, box_height, 
+				(float)text_highlight_corner_radius, text_highlight_color, highlight_opacity);
+		}
 		
 		gs_matrix_push();
 		gs_matrix_translate3f(subtitle_right_x, subtitle_right_y, 0.0f);
@@ -1969,6 +2149,22 @@ void lowerthirds_source::render()
 		// Apply modern scale animation for smooth entrance
 		float final_scale = auto_scale ? (scale_factor * subtitle_right_scale) : subtitle_right_scale;
 		gs_matrix_scale3f(final_scale, final_scale, 1.0f);
+		
+		// Render text shadow first (if enabled)
+		if (text_shadow_enabled) {
+			gs_matrix_push();
+			gs_matrix_translate3f((float)text_shadow_offset_x, (float)text_shadow_offset_y, 0.0f);
+			
+			// Apply shadow opacity combined with text alpha
+			float shadow_opacity = (text_shadow_opacity / 100.0f) * subtitle_right_alpha;
+			gs_effect_t *default_effect = obs_get_base_effect(OBS_EFFECT_DEFAULT);
+			gs_eparam_t *opacity_param = gs_effect_get_param_by_name(default_effect, "opacity");
+			if (opacity_param)
+				gs_effect_set_float(opacity_param, shadow_opacity);
+			
+			obs_source_video_render(subtitle_right_text_source);
+			gs_matrix_pop();
+		}
 		
 		// Apply professional fade with opacity
 		if (subtitle_right_alpha < 1.0f) {
@@ -2196,6 +2392,121 @@ void lowerthirds_source::draw_logo_with_alpha(gs_texture_t *texture, float width
 		
 		gs_render_stop(GS_TRISTRIP);
 	}
+}
+
+void lowerthirds_source::draw_rounded_rect(float x, float y, float width, float height, float radius, uint32_t color, float opacity)
+{
+	if (opacity < 0.001f || width <= 0.0f || height <= 0.0f)
+		return;
+	
+	// Clamp radius to valid range
+	float max_radius = fminf(width / 2.0f, height / 2.0f);
+	radius = fminf(radius, max_radius);
+	
+	// Convert ABGR color to vec4 (RGBA float 0-1)
+	struct vec4 color_vec;
+	vec4_set(&color_vec,
+		((color >> 0) & 0xFF) / 255.0f,   // R
+		((color >> 8) & 0xFF) / 255.0f,   // G
+		((color >> 16) & 0xFF) / 255.0f,  // B
+		opacity                             // A
+	);
+	
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
+	gs_effect_set_vec4(color_param, &color_vec);
+	
+	gs_matrix_push();
+	gs_matrix_translate3f(x, y, 0.0f);
+	
+	while (gs_effect_loop(solid, "Solid")) {
+		if (radius <= 0.5f) {
+			// Draw simple rectangle (no rounded corners)
+			gs_render_start(true);
+			gs_vertex2f(0.0f, 0.0f);
+			gs_vertex2f(width, 0.0f);
+			gs_vertex2f(0.0f, height);
+			gs_vertex2f(width, height);
+			gs_render_stop(GS_TRISTRIP);
+		} else {
+			// Draw rounded rectangle using segments
+			int segments = 8; // Number of segments per corner
+			
+			// Center rectangle (main body)
+			gs_render_start(true);
+			gs_vertex2f(radius, 0.0f);
+			gs_vertex2f(width - radius, 0.0f);
+			gs_vertex2f(radius, height);
+			gs_vertex2f(width - radius, height);
+			gs_render_stop(GS_TRISTRIP);
+			
+			// Left rectangle
+			gs_render_start(true);
+			gs_vertex2f(0.0f, radius);
+			gs_vertex2f(radius, radius);
+			gs_vertex2f(0.0f, height - radius);
+			gs_vertex2f(radius, height - radius);
+			gs_render_stop(GS_TRISTRIP);
+			
+			// Right rectangle
+			gs_render_start(true);
+			gs_vertex2f(width - radius, radius);
+			gs_vertex2f(width, radius);
+			gs_vertex2f(width - radius, height - radius);
+			gs_vertex2f(width, height - radius);
+			gs_render_stop(GS_TRISTRIP);
+			
+			// Top-left corner (triangle strip)
+			for (int i = 0; i < segments; i++) {
+				float angle1 = (float)M_PI + (float)i / (float)segments * (float)M_PI / 2.0f;
+				float angle2 = (float)M_PI + (float)(i + 1) / (float)segments * (float)M_PI / 2.0f;
+				
+				gs_render_start(true);
+				gs_vertex2f(radius, radius); // Center
+				gs_vertex2f(radius + radius * cosf(angle1), radius + radius * sinf(angle1));
+				gs_vertex2f(radius + radius * cosf(angle2), radius + radius * sinf(angle2));
+				gs_render_stop(GS_TRIS);
+			}
+			
+			// Top-right corner (triangle strip)
+			for (int i = 0; i < segments; i++) {
+				float angle1 = 1.5f * (float)M_PI + (float)i / (float)segments * (float)M_PI / 2.0f;
+				float angle2 = 1.5f * (float)M_PI + (float)(i + 1) / (float)segments * (float)M_PI / 2.0f;
+				
+				gs_render_start(true);
+				gs_vertex2f(width - radius, radius); // Center
+				gs_vertex2f(width - radius + radius * cosf(angle1), radius + radius * sinf(angle1));
+				gs_vertex2f(width - radius + radius * cosf(angle2), radius + radius * sinf(angle2));
+				gs_render_stop(GS_TRIS);
+			}
+			
+			// Bottom-left corner (triangle strip)
+			for (int i = 0; i < segments; i++) {
+				float angle1 = 0.5f * (float)M_PI + (float)i / (float)segments * (float)M_PI / 2.0f;
+				float angle2 = 0.5f * (float)M_PI + (float)(i + 1) / (float)segments * (float)M_PI / 2.0f;
+				
+				gs_render_start(true);
+				gs_vertex2f(radius, height - radius); // Center
+				gs_vertex2f(radius + radius * cosf(angle1), height - radius + radius * sinf(angle1));
+				gs_vertex2f(radius + radius * cosf(angle2), height - radius + radius * sinf(angle2));
+				gs_render_stop(GS_TRIS);
+			}
+			
+			// Bottom-right corner (triangle strip)
+			for (int i = 0; i < segments; i++) {
+				float angle1 = 0.0f + (float)i / (float)segments * (float)M_PI / 2.0f;
+				float angle2 = 0.0f + (float)(i + 1) / (float)segments * (float)M_PI / 2.0f;
+				
+				gs_render_start(true);
+				gs_vertex2f(width - radius, height - radius); // Center
+				gs_vertex2f(width - radius + radius * cosf(angle1), height - radius + radius * sinf(angle1));
+				gs_vertex2f(width - radius + radius * cosf(angle2), height - radius + radius * sinf(angle2));
+				gs_render_stop(GS_TRIS);
+			}
+		}
+	}
+	
+	gs_matrix_pop();
 }
 
 void register_lowerthirds_source()

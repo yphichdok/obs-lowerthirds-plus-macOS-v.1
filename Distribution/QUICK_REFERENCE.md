@@ -34,21 +34,37 @@
 
 ## 🎨 Common Customizations
 
+**Settings are organized by category for easy navigation:**
+
+- **🎬 Animation Controls** - Background, logo, text animations + auto-hide
+- **✏️ Text Styling** - Font, size, color, bold
+- **✨ Text Effects** - Shadows, highlight boxes
+- **🖼️ Logo Settings** - Logo image, size, shadow
+- **🎨 Background Styling** - Color, gradient, image
+- **📐 Layout & Positioning** - Bar height, padding
+
 ### Change Colors
-1. **⚙️ Advanced Settings** → Background Color
+1. **⚙️ Advanced Settings** → **🎨 Background Styling** → Background Color
 2. Click color picker → Choose color
 
 ### Change Animation
-1. **⚙️ Advanced Settings** → Animation Style
-2. Select from 13 styles (Slide, Fade, Zoom, etc.)
+1. **⚙️ Advanced Settings** → **🎬 Animation Controls**
+2. Select from 16 styles (Slide, Fade, Zoom, Spin, Scroll, Roll, etc.)
+3. Set different animations for background, logo, and text
+
+### Add Shadows
+1. **⚙️ Advanced Settings** → **✨ Text Effects** or **🖼️ Logo Settings**
+2. Enable Text/Logo Shadow
+3. Adjust shadow color, opacity, and offset
+4. Use 3-5px offset for subtle professional depth
 
 ### Add Logo
-1. **⚙️ Advanced Settings** → Logo Image
+1. **⚙️ Advanced Settings** → **🖼️ Logo Settings** → Logo Image
 2. Browse and select PNG file
 3. Adjust Logo Size if needed
 
 ### Change Font
-1. **⚙️ Advanced Settings** → Font
+1. **⚙️ Advanced Settings** → **✏️ Text Styling** → Font
 2. Click → Choose from system fonts
 
 ---
@@ -61,13 +77,17 @@
 | **Subtitle Size** | 48px | 16-100px |
 | **Bar Height** | 200px | 80-300px |
 | **Logo Size** | 140px | 20-300px |
-| **Animation** | Slide Left | 13 styles |
+| **Animation** | Slide Left | 16 styles |
 | **Duration** | 5 seconds | 1-30 sec |
 | **Auto-Hide** | ON | ON/OFF |
+| **Text Shadow** | OFF | ON/OFF |
+| **Logo Shadow** | OFF | ON/OFF |
 
 ---
 
-## 🎬 13 Animation Styles
+## 🎬 16 Animation Styles
+
+**Independent Controls:** Set different animations for background, logo, and text!
 
 | Icon | Name | Description |
 |------|------|-------------|
@@ -76,13 +96,16 @@
 | ↑ | Slide from Bottom | Upward reveal |
 | ↓ | Slide from Top | Downward reveal |
 | ⊙ | Fade In | Smooth fade |
-| ⊕ | Zoom In | Center zoom |
+| ⊕ | Zoom In | Dramatic center zoom |
 | ⇤ | Expand Left | Horizontal stretch (left) |
 | ⇥ | Expand Right | Horizontal stretch (right) |
-| ⟵ | Push Left | Slide + scale combo |
-| ⟶ | Push Right | Slide + scale combo |
-| ⇐ | Wipe Left | Reveal from left |
-| ⇒ | Wipe Right | Reveal from right |
+| ⟵ | Push Left | 3D perspective slide |
+| ⟶ | Push Right | 3D perspective slide |
+| ⇐ | Wipe Left | Diagonal sweep |
+| ⇒ | Wipe Right | Diagonal sweep |
+| ↻ | Spin | 720° rotation (perfect for logos!) |
+| ⇢ | Scroll | Extended smooth scroll |
+| ⟲ | Roll | 360° tumble with bobbing |
 | ⚡ | Instant | No animation |
 
 ---
@@ -94,7 +117,9 @@
 3. **Match your brand colors** for professional look
 4. **Keep text short** (under 25 chars for title)
 5. **Use PNG logos** with transparency
-6. **Test animations** before going live
+6. **Enable shadows** for better text/logo visibility (3-5px offset)
+7. **Mix animations** - try different styles for background, logo, and text
+8. **Test animations** before going live
 
 ---
 

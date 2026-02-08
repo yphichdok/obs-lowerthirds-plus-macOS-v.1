@@ -93,6 +93,14 @@ struct lowerthirds_source {
 	int logo_shadow_offset_x;
 	int logo_shadow_offset_y;
 	
+	// Text highlight/background properties
+	bool text_highlight_enabled;
+	uint32_t text_highlight_color;
+	int text_highlight_opacity;
+	int text_highlight_corner_radius;
+	int text_highlight_padding_horizontal;
+	int text_highlight_padding_vertical;
+	
 	// Gradient properties
 	GradientType gradient_type;
 	uint32_t gradient_color2;
@@ -114,6 +122,9 @@ struct lowerthirds_source {
 	float display_timer;
 	bool force_replay;
 	
+	// Preview mode
+	bool preview_mode;
+	
 	lowerthirds_source(obs_source_t *source, obs_data_t *settings);
 	~lowerthirds_source();
 	
@@ -127,6 +138,7 @@ struct lowerthirds_source {
 	void draw_gradient_rect(float x, float y, float width, float height, 
 		struct vec4 color1, struct vec4 color2, GradientType type);
 	void draw_logo_with_alpha(gs_texture_t *texture, float width, float height, float alpha);
+	void draw_rounded_rect(float x, float y, float width, float height, float radius, uint32_t color, float opacity);
 };
 
 void register_lowerthirds_source();

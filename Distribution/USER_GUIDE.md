@@ -27,7 +27,8 @@
 
 ### Key Benefits
 - **5 Pre-configured Profiles** - Switch between different lower thirds instantly
-- **13 Modern Animations** - Professional entrance effects
+- **16 Modern Animations** - Professional entrance effects with independent controls
+- **Shadow Effects** - Customizable shadows for text and logo
 - **Full Customization** - Colors, fonts, sizes, logo, backgrounds
 - **Easy to Use** - Simple tabbed interface with one-click playback
 
@@ -101,7 +102,7 @@
 - Instant switching with one click
 - Tab buttons show the title for easy identification
 
-### 13 Animation Styles
+### 16 Animation Styles
 - ↖ Slide from Left
 - ↗ Slide from Right
 - ↑ Slide from Bottom
@@ -114,11 +115,17 @@
 - ⟶ Push from Right
 - ⇐ Wipe from Left
 - ⇒ Wipe from Right
+- ↻ Spin
+- ⇢ Scroll
+- ⟲ Roll
 - ⚡ Instant
+
+**Independent Animation Controls:** Set different animations for background, logo, and text!
 
 ### Customization Options
 - **Fonts:** Choose any system font
 - **Colors:** Background, text, gradient colors
+- **Shadow Effects:** Text and logo shadows with color, opacity, and offset
 - **Sizes:** Title, subtitle, bar height, padding
 - **Logo:** Add custom logo image (PNG, JPG, BMP)
 - **Background:** Solid color, gradient, or custom image
@@ -165,24 +172,40 @@
 1. **Open Advanced Settings**
    - Scroll down to **⚙️ Advanced Settings**
    - Click to expand the collapsible section
+   - All settings are organized by category for easy navigation
 
 2. **Choose Animation Style**
-   - Select from 13 different animation styles
-   - Try different ones to see which fits your style
+   - Expand **🎬 Animation Controls**
+   - Select from 16 different animation styles
+   - Set independent animations for background, logo, and text
+   - Try different combinations to see which fits your style
 
-3. **Adjust Colors & Sizes**
-   - Background Color: Click color picker
-   - Text Color: Choose contrasting color
-   - Sizes: Adjust title, subtitle, bar height
+3. **Adjust Text Appearance**
+   - Expand **✏️ Text Styling** for font, size, color, and bold options
+   - Expand **✨ Text Effects** for shadows and highlight boxes
+
+4. **Adjust Colors & Layout**
+   - **🎨 Background Styling:** Choose colors, gradients, or images
+   - **🖼️ Logo Settings:** Add and customize your logo
+   - **📐 Layout & Positioning:** Adjust bar height and padding
 
 ---
 
 ## Customization Guide
 
+All settings are organized into collapsible categories within **⚙️ Advanced Settings** for professional organization:
+
+- **🎬 Animation Controls** - Background, logo, and text animation styles + auto-hide
+- **✏️ Text Styling** - Font, size, color, and bold options
+- **✨ Text Effects** - Shadows and highlight boxes
+- **🖼️ Logo Settings** - Logo image, size, opacity, padding, and shadow
+- **🎨 Background Styling** - Color, gradient, image, and visibility
+- **📐 Layout & Positioning** - Bar height, padding, and auto-scale
+
 ### Text Styling
 
 #### Fonts
-1. Open **⚙️ Advanced Settings**
+1. Open **⚙️ Advanced Settings** → **✏️ Text Styling**
 2. Click **Font** → Choose any system font
 3. Common choices:
    - **Helvetica Neue** - Clean, modern (default)
@@ -199,6 +222,14 @@
 - **Text Color:** White (#FFFFFF) by default
 - Click color picker to change
 - Ensure good contrast with background
+
+#### Text Shadows
+- **Enable Text Shadow:** Toggle to add depth and dimension
+- **Shadow Color:** Black by default (customizable)
+- **Shadow Opacity:** 0-100% (75% default)
+- **Shadow Offset X:** Horizontal shadow position (-20 to +20 pixels)
+- **Shadow Offset Y:** Vertical shadow position (-20 to +20 pixels)
+- Shadows help text stand out against any background
 
 ### Background Styling
 
@@ -229,8 +260,8 @@
 ### Logo Customization
 
 #### Adding a Logo
-1. Scroll to **Logo** section in Advanced Settings
-2. Click **Logo Image**
+1. Open **⚙️ Advanced Settings** → **🖼️ Logo Settings**
+2. Click **Logo Image (Optional)**
 3. Browse and select your logo file (PNG recommended)
 4. Logo appears on the left side
 
@@ -239,6 +270,14 @@
 - **Logo Opacity:** 100% (default) - Make semi-transparent if needed
 - **Logo Padding (Horizontal):** 20px - Space from left edge
 - **Logo Padding (Vertical):** 0 (auto-centers) - Or set custom value
+
+#### Logo Shadows
+- **Enable Logo Shadow:** Toggle to add depth to your logo
+- **Shadow Color:** Black by default (customizable)
+- **Shadow Opacity:** 0-100% (75% default)
+- **Shadow Offset X:** Horizontal shadow position (-20 to +20 pixels)
+- **Shadow Offset Y:** Vertical shadow position (-20 to +20 pixels)
+- Professional shadow effects enhance logo visibility
 
 ### Layout & Positioning
 
@@ -285,20 +324,33 @@
 ### Push & Wipe
 **Best for:** Smooth, sophisticated transitions
 
-- **⟵ Push from Left** - Slide with scale combo
-- **⟶ Push from Right** - Slide with scale combo
-- **⇐ Wipe from Left** - Reveal effect from left
-- **⇒ Wipe from Right** - Reveal effect from right
+- **⟵ Push from Left** - Slide with 3D perspective squeeze
+- **⟶ Push from Right** - Slide with 3D perspective squeeze
+- **⇐ Wipe from Left** - Diagonal sweep reveal
+- **⇒ Wipe from Right** - Diagonal sweep reveal
+
+### Advanced Effects
+**Best for:** Eye-catching, dynamic presentations
+
+- **↻ Spin** - 720° rotation (perfect for logos!)
+- **⇢ Scroll** - Extended smooth scroll
+- **⟲ Roll** - 360° tumble with bobbing effect
 
 ### Instant
 **Best for:** No animation, immediate display
 
 - **⚡ Instant** - No animation (appears instantly)
 
+### Independent Animation Controls
+- **Background Animation** - Choose any of the 16 styles
+- **Logo Animation** - Independent animation for logo
+- **Text Animation** - Separate animation for text
+- Mix and match for creative combinations!
+
 ### Animation Timing
-- **Duration:** 1.0 second (smooth and modern)
-- **Fade Out:** 0.67 seconds (slightly faster)
-- All animations use professional easing curves
+- **Duration:** 1.4 seconds (smooth and modern)
+- **Staggered Timing:** Elements appear in sequence for professional flow
+- All animations use professional easing curves (ease-out-expo, ease-in-out-quint)
 
 ---
 
@@ -310,18 +362,26 @@
    - Use high contrast (white text on dark background)
    - Avoid very thin fonts
    - Test visibility on different backgrounds
+   - Enable text shadows for better visibility against any background
 
-2. **Logo Best Practices**
+2. **Shadow Effects**
+   - Subtle shadows (3-5px offset) look most professional
+   - Black shadows at 75% opacity work well for most scenarios
+   - Increase offset for more dramatic effects
+   - Match shadow color to your design theme
+
+3. **Logo Best Practices**
    - Use PNG with transparency
    - Square aspect ratio works best (1:1)
    - Keep it simple and recognizable
+   - Add subtle logo shadow for depth
 
-3. **Color Schemes**
+4. **Color Schemes**
    - Match your brand colors
    - Use 2-3 colors maximum
    - Test on both light and dark scenes
 
-4. **Text Length**
+5. **Text Length**
    - Keep titles under 25 characters
    - Subtitles under 40 characters
    - Longer text may get cut off

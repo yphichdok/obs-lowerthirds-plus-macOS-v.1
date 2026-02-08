@@ -8,19 +8,12 @@ Professional lower thirds plugin for OBS Studio with tabbed profiles, modern ani
 
 ## 📦 Quick Install
 
-### Option 1: DMG Installer (Easiest) ⭐
-1. **Download** `LowerThirdsPlus-v1.0-macOS.dmg`
-2. **Double-click** the DMG to mount it
-3. **Double-click** `Install Lower Thirds Plus.command`
-4. Follow the prompts
-5. Launch OBS Studio
-
-### Option 2: Automatic Script
+### Option 1: Automatic (Easiest)
 1. **Double-click** `INSTALL.command`
 2. Follow the prompts
 3. Launch OBS Studio
 
-### Option 3: Manual
+### Option 2: Manual
 1. Copy `LowerThirdsPlus.plugin` to:
    ```
    ~/Library/Application Support/obs-studio/plugins/
@@ -30,11 +23,15 @@ Professional lower thirds plugin for OBS Studio with tabbed profiles, modern ani
 ## ✨ Key Features
 
 - **5 Quick-Switch Tabs** - Pre-configure different lower thirds and switch instantly
-- **13 Animation Styles** - Slide, fade, zoom, expand, push, wipe effects
-- **Modern Design** - Smooth animations with professional easing
+- **16 Animation Styles** - Slide, fade, zoom, expand, push, wipe, spin, scroll, roll, instant
+- **Independent Animations** - Separate controls for background, logo, and text
+- **Text Highlights** - Background boxes with rounded corners and custom colors
+- **Shadow Effects** - Customizable shadows for text and logo with color, opacity, and offset
+- **Professional Layout** - Organized by category (Animation, Text, Logo, Background, Layout)
+- **Modern Design** - Smooth 1.4s animations with professional easing
 - **Full Customization** - Fonts, colors, sizes, logo, background
 - **Auto-Hide** - Automatically hides after set duration
-- **Preview Mode** - See changes live while editing
+- **Preview Mode** - Live preview that stays open while adjusting settings
 - **Independent Profiles** - Each tab has its own content
 
 ## 📋 Requirements
