@@ -8,12 +8,19 @@ Professional lower thirds plugin for OBS Studio with tabbed profiles, modern ani
 
 ## 📦 Quick Install
 
-### Option 1: Automatic (Easiest)
+### Option 1: DMG Installer (Easiest) ⭐
+1. **Download** `LowerThirdsPlus-v1.0-macOS.dmg`
+2. **Double-click** the DMG to mount it
+3. **Double-click** `Install Lower Thirds Plus.command`
+4. Follow the prompts
+5. Launch OBS Studio
+
+### Option 2: Automatic Script
 1. **Double-click** `INSTALL.command`
 2. Follow the prompts
 3. Launch OBS Studio
 
-### Option 2: Manual
+### Option 3: Manual
 1. Copy `LowerThirdsPlus.plugin` to:
    ```
    ~/Library/Application Support/obs-studio/plugins/

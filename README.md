@@ -25,6 +25,24 @@ Professional lower thirds plugin with 5 tabbed profiles, 13 animation styles, an
 
 ---
 
+## 💿 Easy Installation (DMG)
+
+**For end users:** Download the pre-built DMG installer from the **Distribution** folder or GitHub releases.
+
+1. Download `LowerThirdsPlus-v1.0-macOS.dmg`
+2. Double-click to mount the disk image
+3. Double-click `Install Lower Thirds Plus.command`
+4. Follow the on-screen instructions
+5. Launch OBS Studio
+
+The DMG includes:
+- Pre-built plugin bundle
+- Automatic installer script
+- Complete documentation (User Guide, Quick Reference)
+- No compilation required!
+
+---
+
 ## 📦 Requirements
 
 ### Runtime Requirements
