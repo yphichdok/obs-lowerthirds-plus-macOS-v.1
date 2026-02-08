@@ -79,6 +79,20 @@ struct lowerthirds_source {
 	int bar_height_pixels;
 	bool show_background;
 	
+	// Shadow properties for text
+	bool text_shadow_enabled;
+	uint32_t text_shadow_color;
+	int text_shadow_opacity;
+	int text_shadow_offset_x;
+	int text_shadow_offset_y;
+	
+	// Shadow properties for logo
+	bool logo_shadow_enabled;
+	uint32_t logo_shadow_color;
+	int logo_shadow_opacity;
+	int logo_shadow_offset_x;
+	int logo_shadow_offset_y;
+	
 	// Gradient properties
 	GradientType gradient_type;
 	uint32_t gradient_color2;

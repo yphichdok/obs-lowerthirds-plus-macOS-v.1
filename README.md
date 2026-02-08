@@ -16,6 +16,7 @@ Professional lower thirds plugin with 5 tabbed profiles, 16 animation styles, an
 - **Independent Animations** - Separate animation controls for background, logo, and text
 - **Modern Animations** - Smooth 1.4-second animations with professional easing
 - **Full Customization** - Fonts, colors, sizes, logo, backgrounds
+- **Shadow Effects** - Customizable shadows for text and logo with color, opacity, and offset controls
 - **Auto-Hide** - Automatically hides after set duration
 - **Preview Mode** - See live preview while editing
 - **Logo Support** - Optional left-side logo with size and opacity controls
@@ -100,6 +101,7 @@ The DMG includes:
 - Subtitle size: 16-100px (default: 48px)
 - Text color picker
 - Bold toggle
+- **Shadow effects** with color, opacity, and offset controls
 
 ### Background
 - Solid color or gradient
@@ -114,6 +116,7 @@ The DMG includes:
 - Opacity: 0-100%
 - Padding controls (horizontal, vertical)
 - Auto-center vertically
+- **Shadow effects** with color, opacity, and offset controls
 
 ### Layout
 - Bar height: 80-300px (default: 200px)
@@ -256,6 +259,7 @@ brew install cmake
 - Independent animation controls for background, logo, and text
 - Modern smooth animations (1.4s duration) with staggered element timing
 - Full text customization with system fonts
+- **Shadow effects for text and logo** with customizable color, opacity, and offset
 - Logo support (left side, optional) with independent animation and spin effect
 - Background images and gradients
 - Right-side text fields (optional)

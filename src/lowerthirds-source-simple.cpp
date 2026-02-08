@@ -180,6 +180,20 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	// Gradient defaults
 	obs_data_set_default_int(settings, "gradient_type", GRADIENT_NONE);
 	obs_data_set_default_int(settings, "gradient_color2", 0xFFD27619); // Darker blue for gradient (ABGR format)
+	
+	// Text shadow defaults
+	obs_data_set_default_bool(settings, "text_shadow_enabled", false);
+	obs_data_set_default_int(settings, "text_shadow_color", 0xFF000000); // Black (ABGR format)
+	obs_data_set_default_int(settings, "text_shadow_opacity", 75);
+	obs_data_set_default_int(settings, "text_shadow_offset_x", 3);
+	obs_data_set_default_int(settings, "text_shadow_offset_y", 3);
+	
+	// Logo shadow defaults
+	obs_data_set_default_bool(settings, "logo_shadow_enabled", false);
+	obs_data_set_default_int(settings, "logo_shadow_color", 0xFF000000); // Black (ABGR format)
+	obs_data_set_default_int(settings, "logo_shadow_opacity", 75);
+	obs_data_set_default_int(settings, "logo_shadow_offset_x", 3);
+	obs_data_set_default_int(settings, "logo_shadow_offset_y", 3);
 }
 
 // Button callback for Play Profile 1
@@ -509,6 +523,13 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_properties_add_int_slider(advanced_group, "subtitle_size", "Subtitle Size (px)", 16, 100, 2);
 	obs_properties_add_color(advanced_group, "text_color", "Text Color");
 	
+	// TEXT SHADOW
+	obs_properties_add_bool(advanced_group, "text_shadow_enabled", "🌑 Enable Text Shadow");
+	obs_properties_add_color(advanced_group, "text_shadow_color", "   Shadow Color");
+	obs_properties_add_int_slider(advanced_group, "text_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(advanced_group, "text_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
+	obs_properties_add_int_slider(advanced_group, "text_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
+	
 	// LOGO (LEFT SIDE - OPTIONAL)
 	obs_properties_add_path(advanced_group, "logo_image", "Logo Image (Optional)", 
 		OBS_PATH_FILE, "Image Files (*.png *.jpg *.jpeg *.bmp *.svg);;All Files (*.*)", NULL);
@@ -516,6 +537,13 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_properties_add_int_slider(advanced_group, "logo_opacity", "Logo Opacity (%)", 0, 100, 1);
 	obs_properties_add_int_slider(advanced_group, "logo_padding_horizontal", "Logo Padding (Left/Right)", 0, 200, 5);
 	obs_properties_add_int_slider(advanced_group, "logo_padding_vertical", "Logo Padding (Top/Bottom)", 0, 100, 5);
+	
+	// LOGO SHADOW
+	obs_properties_add_bool(advanced_group, "logo_shadow_enabled", "🌑 Enable Logo Shadow");
+	obs_properties_add_color(advanced_group, "logo_shadow_color", "   Shadow Color");
+	obs_properties_add_int_slider(advanced_group, "logo_shadow_opacity", "   Shadow Opacity (%)", 0, 100, 1);
+	obs_properties_add_int_slider(advanced_group, "logo_shadow_offset_x", "   Shadow Offset X (px)", -20, 20, 1);
+	obs_properties_add_int_slider(advanced_group, "logo_shadow_offset_y", "   Shadow Offset Y (px)", -20, 20, 1);
 	
 	// BACKGROUND STYLING
 	obs_properties_add_bool(advanced_group, "show_background", "☑️ Show Background (OFF = Text & Logo Only)");
@@ -574,6 +602,16 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, padding_vertical(25)
 	, bar_height_pixels(200)  // Taller box
 	, show_background(true)
+	, text_shadow_enabled(false)
+	, text_shadow_color(0xFF000000)  // Black
+	, text_shadow_opacity(75)
+	, text_shadow_offset_x(3)
+	, text_shadow_offset_y(3)
+	, logo_shadow_enabled(false)
+	, logo_shadow_color(0xFF000000)  // Black
+	, logo_shadow_opacity(75)
+	, logo_shadow_offset_x(3)
+	, logo_shadow_offset_y(3)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
 	, auto_scale(false)  // OFF by default - keeps consistent pixel sizes
@@ -813,6 +851,20 @@ void lowerthirds_source::update(obs_data_t *settings)
 	gradient_type = (GradientType)obs_data_get_int(settings, "gradient_type");
 	gradient_color2 = (uint32_t)obs_data_get_int(settings, "gradient_color2");
 	
+	// Text shadow settings
+	text_shadow_enabled = obs_data_get_bool(settings, "text_shadow_enabled");
+	text_shadow_color = (uint32_t)obs_data_get_int(settings, "text_shadow_color");
+	text_shadow_opacity = (int)obs_data_get_int(settings, "text_shadow_opacity");
+	text_shadow_offset_x = (int)obs_data_get_int(settings, "text_shadow_offset_x");
+	text_shadow_offset_y = (int)obs_data_get_int(settings, "text_shadow_offset_y");
+	
+	// Logo shadow settings
+	logo_shadow_enabled = obs_data_get_bool(settings, "logo_shadow_enabled");
+	logo_shadow_color = (uint32_t)obs_data_get_int(settings, "logo_shadow_color");
+	logo_shadow_opacity = (int)obs_data_get_int(settings, "logo_shadow_opacity");
+	logo_shadow_offset_x = (int)obs_data_get_int(settings, "logo_shadow_offset_x");
+	logo_shadow_offset_y = (int)obs_data_get_int(settings, "logo_shadow_offset_y");
+	
 	bool new_visible = obs_data_get_bool(settings, "visible");
 	auto_hide_enabled = obs_data_get_bool(settings, "auto_hide");
 	display_duration = (float)obs_data_get_double(settings, "duration");
@@ -861,6 +913,15 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
 		
+		// Shadow settings
+		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
+		if (text_shadow_enabled) {
+			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
+			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y)); // Use Y offset as shadow size
+			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
+			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
+		}
+		
 		obs_source_update(title_text_source, text_settings);
 		obs_data_release(text_settings);
 	}
@@ -878,6 +939,15 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_int(font_obj, "flags", 0); // Normal weight
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
+		
+		// Shadow settings
+		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
+		if (text_shadow_enabled) {
+			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
+			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
+			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
+			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
+		}
 		
 		obs_source_update(subtitle_text_source, text_settings);
 		obs_data_release(text_settings);
@@ -898,6 +968,15 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
 		
+		// Shadow settings
+		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
+		if (text_shadow_enabled) {
+			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
+			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
+			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
+			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
+		}
+		
 		obs_source_update(title_right_text_source, text_settings);
 		obs_data_release(text_settings);
 	}
@@ -916,6 +995,15 @@ void lowerthirds_source::update_text_sources()
 		obs_data_set_int(font_obj, "flags", 0); // Normal weight
 		obs_data_set_obj(text_settings, "font", font_obj);
 		obs_data_release(font_obj);
+		
+		// Shadow settings
+		obs_data_set_bool(text_settings, "drop_shadow", text_shadow_enabled);
+		if (text_shadow_enabled) {
+			obs_data_set_int(text_settings, "custom_width", text_shadow_offset_x);
+			obs_data_set_int(text_settings, "outline_size", abs(text_shadow_offset_y));
+			obs_data_set_int(text_settings, "outline_color", text_shadow_color);
+			obs_data_set_int(text_settings, "outline_opacity", text_shadow_opacity);
+		}
 		
 		obs_source_update(subtitle_right_text_source, text_settings);
 		obs_data_release(text_settings);
@@ -1448,6 +1536,22 @@ void lowerthirds_source::render()
 					// Instant appearance
 					gs_matrix_translate3f(base_logo_x, base_logo_y, 0.0f);
 					break;
+			}
+			
+			// Draw logo shadow first (if enabled) - simple darkened copy with offset
+			if (logo_shadow_enabled) {
+				gs_matrix_push();
+				
+				// Apply shadow offset
+				gs_matrix_translate3f((float)logo_shadow_offset_x, (float)logo_shadow_offset_y, 0.0f);
+				
+				// Calculate shadow alpha (combination of shadow opacity and animation)
+				float shadow_alpha = (logo_shadow_opacity / 100.0f) * final_logo_alpha;
+				
+				// Draw logo as shadow (darkened with shadow color)
+				draw_logo_with_alpha(logo_image->texture, fixed_logo_size, fixed_logo_size, shadow_alpha * 0.5f);
+				
+				gs_matrix_pop();
 			}
 			
 			// Draw logo with custom alpha support
