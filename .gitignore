@@ -33,3 +33,18 @@ Makefile
 *~
 *.swp
 *.swo
+
+# Credentials and sensitive files
+*.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.cert
+*.crt
+*.cer
+*credentials*
+*secret*
+*.keystore
+.env.*
+config/secrets.*
