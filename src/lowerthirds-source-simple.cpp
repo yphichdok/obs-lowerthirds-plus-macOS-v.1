@@ -204,9 +204,9 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "text_highlight_padding_vertical", 10);
 	
 	// Background pattern defaults
-	obs_data_set_default_int(settings, "bg_pattern", PATTERN_NONE);
-	obs_data_set_default_int(settings, "pattern_color", 0xFFFFFFFF); // White (ABGR format)
-	obs_data_set_default_int(settings, "pattern_opacity", 15); // Subtle by default
+	obs_data_set_default_int(settings, "bg_pattern", PATTERN_DOTS); // Dots pattern by default
+	obs_data_set_default_int(settings, "pattern_color", 0xFF000000); // Black (ABGR format) - visible on light backgrounds
+	obs_data_set_default_int(settings, "pattern_opacity", 20); // Visible but not overwhelming
 	obs_data_set_default_double(settings, "pattern_scale", 1.0); // Normal size
 	obs_data_set_default_double(settings, "pattern_speed", 20.0); // Slow movement
 	obs_data_set_default_bool(settings, "pattern_animate", true); // Animated by default
@@ -732,9 +732,9 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, text_highlight_padding_vertical(10)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
-	, bg_pattern(PATTERN_NONE)
-	, pattern_color(0xFFFFFFFF)  // White
-	, pattern_opacity(15)
+	, bg_pattern(PATTERN_DOTS)
+	, pattern_color(0xFF000000)  // Black - visible on light backgrounds
+	, pattern_opacity(20)
 	, pattern_scale(1.0f)
 	, pattern_speed(20.0f)
 	, pattern_animate(true)
@@ -2637,7 +2637,8 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 	gs_matrix_push();
 	gs_matrix_translate3f(x, y, 0.0f);
 	
-	// Enable scissor test to clip pattern to background bounds
+	// Push blend state to ensure pattern renders on top of background
+	gs_blend_state_push();
 	gs_enable_color(true, true, true, true);
 	gs_enable_blending(true);
 	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
@@ -2917,8 +2918,9 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 			break;
 	}
 	
-	// Disable scissor test
+	// Disable scissor test and restore blend state
 	gs_set_scissor_rect(NULL);
+	gs_blend_state_pop();
 	
 	gs_matrix_pop();
 }
