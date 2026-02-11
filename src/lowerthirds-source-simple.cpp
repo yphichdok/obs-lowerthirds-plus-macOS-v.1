@@ -204,9 +204,9 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "text_highlight_padding_vertical", 10);
 	
 	// Background pattern defaults
-	obs_data_set_default_int(settings, "bg_pattern", PATTERN_DOTS); // Dots pattern by default
+	obs_data_set_default_int(settings, "bg_pattern", PATTERN_LINES_HORIZONTAL); // Horizontal lines - simple and visible
 	obs_data_set_default_int(settings, "pattern_color", 0xFF000000); // Black (ABGR format) - visible on light backgrounds
-	obs_data_set_default_int(settings, "pattern_opacity", 30); // Clearly visible
+	obs_data_set_default_int(settings, "pattern_opacity", 50); // Very visible for testing
 	obs_data_set_default_double(settings, "pattern_scale", 1.0); // Normal size
 	obs_data_set_default_double(settings, "pattern_speed", 20.0); // Slow movement
 	obs_data_set_default_bool(settings, "pattern_animate", true); // Animated by default
@@ -732,9 +732,9 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, text_highlight_padding_vertical(10)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
-	, bg_pattern(PATTERN_DOTS)
+	, bg_pattern(PATTERN_LINES_HORIZONTAL)
 	, pattern_color(0xFF000000)  // Black - visible on light backgrounds
-	, pattern_opacity(30)
+	, pattern_opacity(50)
 	, pattern_scale(1.0f)
 	, pattern_speed(20.0f)
 	, pattern_animate(true)
@@ -1501,9 +1501,10 @@ void lowerthirds_source::render()
 		}
 	}
 	
-	// Draw art pattern overlay AFTER background (if enabled) - clipped to background bounds
-	// This ensures pattern renders on top of all background elements
+	// Draw art pattern overlay AFTER background (if enabled)
+	// Pattern renders on top of all background elements
 	if (show_background && bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
+		// Draw pattern within the current transformation matrix
 		draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
 			bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
 			pattern_scale, pattern_animation_offset);
@@ -2635,22 +2636,14 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 	gs_effect_set_vec4(color_param, &pattern_color_vec);
 	
-	gs_matrix_push();
-	gs_matrix_translate3f(x, y, 0.0f);
-	
 	// Push blend state to ensure pattern renders on top of background
 	gs_blend_state_push();
 	gs_enable_color(true, true, true, true);
 	gs_enable_blending(true);
 	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
 	
-	// Set scissor rectangle to clip to background area
-	struct gs_rect scissor_rect;
-	scissor_rect.x = (int)x;
-	scissor_rect.y = (int)y;
-	scissor_rect.cx = (int)width;
-	scissor_rect.cy = (int)height;
-	gs_set_scissor_rect(&scissor_rect);
+	gs_matrix_push();
+	gs_matrix_translate3f(x, y, 0.0f);
 	
 	// Base spacing and size scaled by user setting
 	float base_spacing = 30.0f * scale;
@@ -2658,27 +2651,23 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 	
 	switch (pattern) {
 		case PATTERN_DOTS: {
-			// Animated moving dots
+			// Animated moving dots - simplified as small squares for performance
 			float anim_x = fmodf(animation_offset, base_spacing);
 			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
+			float dot_size = base_size * 2.0f; // Make dots larger and more visible
 			
 			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
 				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
 					for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
-						// Draw small circle as dot
-						int segments = 8;
-						for (int i = 0; i < segments; i++) {
-							float angle1 = (float)i / (float)segments * 2.0f * (float)M_PI;
-							float angle2 = (float)(i + 1) / (float)segments * 2.0f * (float)M_PI;
-							
-							gs_vertex2f(px, py); // Center
-							gs_vertex2f(px + base_size * cosf(angle1), py + base_size * sinf(angle1));
-							gs_vertex2f(px + base_size * cosf(angle2), py + base_size * sinf(angle2));
-						}
+						// Draw each dot as a small square
+						gs_render_start(true);
+						gs_vertex2f(px - dot_size * 0.5f, py - dot_size * 0.5f);
+						gs_vertex2f(px + dot_size * 0.5f, py - dot_size * 0.5f);
+						gs_vertex2f(px - dot_size * 0.5f, py + dot_size * 0.5f);
+						gs_vertex2f(px + dot_size * 0.5f, py + dot_size * 0.5f);
+						gs_render_stop(GS_TRISTRIP);
 					}
 				}
-				gs_render_stop(GS_TRIS);
 			}
 			break;
 		}
@@ -2686,17 +2675,17 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 		case PATTERN_LINES_HORIZONTAL: {
 			// Animated horizontal lines
 			float anim_offset_val = fmodf(animation_offset, base_spacing * 2.0f);
-			float line_thickness = 2.0f * scale;
+			float line_thickness = 3.0f * scale; // Thicker for visibility
 			
 			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
 				for (float py = -anim_offset_val; py < height + base_spacing; py += base_spacing) {
+					gs_render_start(true);
 					gs_vertex2f(0.0f, py);
 					gs_vertex2f(width, py);
 					gs_vertex2f(0.0f, py + line_thickness);
 					gs_vertex2f(width, py + line_thickness);
+					gs_render_stop(GS_TRISTRIP);
 				}
-				gs_render_stop(GS_TRISTRIP);
 			}
 			break;
 		}
@@ -2919,11 +2908,10 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 			break;
 	}
 	
-	// Disable scissor test and restore blend state
-	gs_set_scissor_rect(NULL);
-	gs_blend_state_pop();
-	
 	gs_matrix_pop();
+	
+	// Restore blend state
+	gs_blend_state_pop();
 }
 
 void register_lowerthirds_source()
