@@ -203,13 +203,13 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "text_highlight_padding_horizontal", 20);
 	obs_data_set_default_int(settings, "text_highlight_padding_vertical", 10);
 	
-	// Background pattern defaults
-	obs_data_set_default_int(settings, "bg_pattern", PATTERN_LINES_HORIZONTAL); // Horizontal lines - simple and visible
-	obs_data_set_default_int(settings, "pattern_color", 0xFF000000); // Black (ABGR format) - visible on light backgrounds
-	obs_data_set_default_int(settings, "pattern_opacity", 50); // Very visible for testing
-	obs_data_set_default_double(settings, "pattern_scale", 1.0); // Normal size
-	obs_data_set_default_double(settings, "pattern_speed", 20.0); // Slow movement
-	obs_data_set_default_bool(settings, "pattern_animate", true); // Animated by default
+	// Background art effect defaults
+	obs_data_set_default_int(settings, "art_effect", ART_PARTICLES); // Particles by default
+	obs_data_set_default_int(settings, "art_color", 0xFFFFFFFF); // White (ABGR format) - glowing effect
+	obs_data_set_default_int(settings, "art_opacity", 60); // Clearly visible
+	obs_data_set_default_double(settings, "art_intensity", 1.0); // Normal intensity
+	obs_data_set_default_double(settings, "art_speed", 30.0); // Moderate movement
+	obs_data_set_default_bool(settings, "art_animate", true); // Animated by default
 }
 
 // Button callback for Play Profile 1
@@ -644,25 +644,24 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_properties_add_path(background_group, "bg_image", "Background Image (Optional)", 
 		OBS_PATH_FILE, "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*.*)", NULL);
 	
-	// Background pattern options
-	obs_property_t *pattern_list = obs_properties_add_list(background_group, "bg_pattern", 
-		"🎨 Art Pattern", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
-	obs_property_list_add_int(pattern_list, "None", PATTERN_NONE);
-	obs_property_list_add_int(pattern_list, "● Dots", PATTERN_DOTS);
-	obs_property_list_add_int(pattern_list, "─ Lines (Horizontal)", PATTERN_LINES_HORIZONTAL);
-	obs_property_list_add_int(pattern_list, "│ Lines (Vertical)", PATTERN_LINES_VERTICAL);
-	obs_property_list_add_int(pattern_list, "╱ Lines (Diagonal)", PATTERN_LINES_DIAGONAL);
-	obs_property_list_add_int(pattern_list, "┼ Grid", PATTERN_GRID);
-	obs_property_list_add_int(pattern_list, "○ Circles", PATTERN_CIRCLES);
-	obs_property_list_add_int(pattern_list, "⬡ Hexagons", PATTERN_HEXAGONS);
-	obs_property_list_add_int(pattern_list, "～ Waves", PATTERN_WAVES);
-	obs_property_list_add_int(pattern_list, "△ Triangles", PATTERN_TRIANGLES);
+	// Background art effects
+	obs_property_t *art_list = obs_properties_add_list(background_group, "art_effect", 
+		"✨ Art Effect", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(art_list, "None", ART_NONE);
+	obs_property_list_add_int(art_list, "✦ Particles (Floating)", ART_PARTICLES);
+	obs_property_list_add_int(art_list, "☀ Light Rays", ART_LIGHT_RAYS);
+	obs_property_list_add_int(art_list, "◉ Bokeh Blur", ART_BOKEH);
+	obs_property_list_add_int(art_list, "✨ Sparkles", ART_SPARKLES);
+	obs_property_list_add_int(art_list, "⊙ Glow Orbs", ART_GLOW_ORBS);
+	obs_property_list_add_int(art_list, "━ Light Streaks", ART_LIGHT_STREAKS);
+	obs_property_list_add_int(art_list, "◈ Shimmer", ART_SHIMMER);
+	obs_property_list_add_int(art_list, "⚡ Energy Flow", ART_ENERGY_FLOW);
 	
-	obs_properties_add_color(background_group, "pattern_color", "   Pattern Color");
-	obs_properties_add_int_slider(background_group, "pattern_opacity", "   Pattern Opacity (%)", 0, 100, 1);
-	obs_properties_add_float_slider(background_group, "pattern_scale", "   Pattern Scale", 0.5, 3.0, 0.1);
-	obs_properties_add_bool(background_group, "pattern_animate", "   🎬 Animate Pattern (Live Effect)");
-	obs_properties_add_float_slider(background_group, "pattern_speed", "   Animation Speed", 5.0, 100.0, 5.0);
+	obs_properties_add_color(background_group, "art_color", "   Effect Color");
+	obs_properties_add_int_slider(background_group, "art_opacity", "   Effect Opacity (%)", 0, 100, 1);
+	obs_properties_add_float_slider(background_group, "art_intensity", "   Effect Intensity", 0.5, 2.0, 0.1);
+	obs_properties_add_bool(background_group, "art_animate", "   🎬 Animate Effect (Live)");
+	obs_properties_add_float_slider(background_group, "art_speed", "   Animation Speed", 5.0, 100.0, 5.0);
 	
 	obs_properties_add_group(advanced_group, "background_styling", "🎨 Background Styling", 
 		OBS_GROUP_NORMAL, background_group);
@@ -732,13 +731,13 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, text_highlight_padding_vertical(10)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
-	, bg_pattern(PATTERN_LINES_HORIZONTAL)
-	, pattern_color(0xFF000000)  // Black - visible on light backgrounds
-	, pattern_opacity(50)
-	, pattern_scale(1.0f)
-	, pattern_speed(20.0f)
-	, pattern_animate(true)
-	, pattern_animation_offset(0.0f)
+	, art_effect(ART_PARTICLES)
+	, art_color(0xFFFFFFFF)  // White - glowing effect
+	, art_opacity(60)
+	, art_intensity(1.0f)
+	, art_speed(30.0f)
+	, art_animate(true)
+	, art_animation_offset(0.0f)
 	, auto_scale(false)  // OFF by default - keeps consistent pixel sizes
 	, scale_factor(1.0f)
 	, is_visible(false)
@@ -977,13 +976,13 @@ void lowerthirds_source::update(obs_data_t *settings)
 	gradient_type = (GradientType)obs_data_get_int(settings, "gradient_type");
 	gradient_color2 = (uint32_t)obs_data_get_int(settings, "gradient_color2");
 	
-	// Background pattern settings
-	bg_pattern = (BackgroundPattern)obs_data_get_int(settings, "bg_pattern");
-	pattern_color = (uint32_t)obs_data_get_int(settings, "pattern_color");
-	pattern_opacity = (int)obs_data_get_int(settings, "pattern_opacity");
-	pattern_scale = (float)obs_data_get_double(settings, "pattern_scale");
-	pattern_speed = (float)obs_data_get_double(settings, "pattern_speed");
-	pattern_animate = obs_data_get_bool(settings, "pattern_animate");
+	// Background art effect settings
+	art_effect = (BackgroundArtEffect)obs_data_get_int(settings, "art_effect");
+	art_color = (uint32_t)obs_data_get_int(settings, "art_color");
+	art_opacity = (int)obs_data_get_int(settings, "art_opacity");
+	art_intensity = (float)obs_data_get_double(settings, "art_intensity");
+	art_speed = (float)obs_data_get_double(settings, "art_speed");
+	art_animate = obs_data_get_bool(settings, "art_animate");
 	
 	// Text shadow settings
 	text_shadow_enabled = obs_data_get_bool(settings, "text_shadow_enabled");
@@ -1154,12 +1153,12 @@ void lowerthirds_source::tick(float seconds)
 		display_timer = 0.0f;
 	}
 	
-	// Update pattern animation offset for live effect
-	if (pattern_animate && bg_pattern != PATTERN_NONE) {
-		pattern_animation_offset += seconds * pattern_speed;
+	// Update art effect animation offset for live effect
+	if (art_animate && art_effect != ART_NONE) {
+		art_animation_offset += seconds * art_speed;
 		// Wrap around to prevent overflow
-		if (pattern_animation_offset > 10000.0f)
-			pattern_animation_offset = fmodf(pattern_animation_offset, 1000.0f);
+		if (art_animation_offset > 10000.0f)
+			art_animation_offset = fmodf(art_animation_offset, 1000.0f);
 	}
 }
 
@@ -1503,11 +1502,11 @@ void lowerthirds_source::render()
 	
 	// Draw art pattern overlay AFTER background (if enabled)
 	// Pattern renders on top of all background elements
-	if (show_background && bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
-		// Draw pattern within the current transformation matrix
-		draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
-			bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
-			pattern_scale, pattern_animation_offset);
+	if (show_background && art_effect != ART_NONE && art_opacity > 0) {
+		// Draw art effect within the current transformation matrix
+		draw_art_effect(0.0f, 0.0f, (float)fixed_width, bar_height, 
+			art_effect, art_color, (art_opacity / 100.0f) * alpha, 
+			art_intensity, art_animation_offset);
 	}
 	
 	gs_matrix_pop();
@@ -2617,15 +2616,15 @@ void lowerthirds_source::draw_rounded_rect(float x, float y, float width, float 
 }
 
 // Draw background pattern with live animation effects
-void lowerthirds_source::draw_background_pattern(float x, float y, float width, float height, 
-	BackgroundPattern pattern, uint32_t color, float opacity, float scale, float animation_offset)
+void lowerthirds_source::draw_art_effect(float x, float y, float width, float height, 
+	BackgroundArtEffect effect, uint32_t color, float opacity, float intensity, float animation_offset)
 {
-	if (opacity < 0.001f || width <= 0.0f || height <= 0.0f || pattern == PATTERN_NONE)
+	if (opacity < 0.001f || width <= 0.0f || height <= 0.0f || effect == ART_NONE)
 		return;
 	
 	// Convert color to vec4 (ABGR to RGBA)
-	struct vec4 pattern_color_vec;
-	vec4_set(&pattern_color_vec,
+	struct vec4 art_color_vec;
+	vec4_set(&art_color_vec,
 		((color >> 0) & 0xFF) / 255.0f,   // R
 		((color >> 8) & 0xFF) / 255.0f,   // G
 		((color >> 16) & 0xFF) / 255.0f,  // B
@@ -2634,37 +2633,52 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 	
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
-	gs_effect_set_vec4(color_param, &pattern_color_vec);
 	
-	// Push blend state to ensure pattern renders on top of background
+	// Push blend state - use additive blending for glowing effects
 	gs_blend_state_push();
 	gs_enable_color(true, true, true, true);
 	gs_enable_blending(true);
-	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
 	
 	gs_matrix_push();
 	gs_matrix_translate3f(x, y, 0.0f);
 	
-	// Base spacing and size scaled by user setting
-	float base_spacing = 30.0f * scale;
-	float base_size = 5.0f * scale;
-	
-	switch (pattern) {
-		case PATTERN_DOTS: {
-			// Animated moving dots - simplified as small squares for performance
-			float anim_x = fmodf(animation_offset, base_spacing);
-			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
-			float dot_size = base_size * 2.0f; // Make dots larger and more visible
+	switch (effect) {
+		case ART_PARTICLES: {
+			// Floating particle system - creates a dynamic, floating particle effect
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending for glow
 			
-			while (gs_effect_loop(solid, "Solid")) {
-				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
-					for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
-						// Draw each dot as a small square
+			int num_particles = (int)(80 * intensity);
+			float particle_size = 3.0f * intensity;
+			
+			for (int i = 0; i < num_particles; i++) {
+				// Create pseudo-random but deterministic particle positions
+				float seed = (float)i * 12.9898f;
+				float px = fmodf(sinf(seed) * 43758.5453f, width);
+				float py = fmodf(cosf(seed * 1.414f) * 43758.5453f, height);
+				
+				// Animate particles floating up and drifting
+				float speed = fmodf(sinf(seed * 2.718f) * 0.5f + 0.5f, 1.0f);
+				float drift = sinf(animation_offset * 0.5f + seed) * 20.0f;
+				py = fmodf(py - animation_offset * speed * 10.0f + height, height);
+				px = px + drift;
+				
+				// Pulsating opacity
+				float pulse = (sinf(animation_offset * 2.0f + seed) * 0.5f + 0.5f) * opacity;
+				
+				// Set color with varying opacity
+				struct vec4 particle_color = art_color_vec;
+				particle_color.w = pulse;
+				gs_effect_set_vec4(color_param, &particle_color);
+				
+				// Draw particle as glowing circle (approximated by multiple overlapping quads)
+				while (gs_effect_loop(solid, "Solid")) {
+					for (int layer = 0; layer < 3; layer++) {
+						float size = particle_size * (1.0f + layer * 0.5f);
 						gs_render_start(true);
-						gs_vertex2f(px - dot_size * 0.5f, py - dot_size * 0.5f);
-						gs_vertex2f(px + dot_size * 0.5f, py - dot_size * 0.5f);
-						gs_vertex2f(px - dot_size * 0.5f, py + dot_size * 0.5f);
-						gs_vertex2f(px + dot_size * 0.5f, py + dot_size * 0.5f);
+						gs_vertex2f(px - size, py - size);
+						gs_vertex2f(px + size, py - size);
+						gs_vertex2f(px - size, py + size);
+						gs_vertex2f(px + size, py + size);
 						gs_render_stop(GS_TRISTRIP);
 					}
 				}
@@ -2672,234 +2686,340 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 			break;
 		}
 		
-		case PATTERN_LINES_HORIZONTAL: {
-			// Animated horizontal lines
-			float anim_offset_val = fmodf(animation_offset, base_spacing * 2.0f);
-			float line_thickness = 3.0f * scale; // Thicker for visibility
+		case ART_LIGHT_RAYS: {
+			// Diagonal light rays emanating from corner
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
 			
-			while (gs_effect_loop(solid, "Solid")) {
-				for (float py = -anim_offset_val; py < height + base_spacing; py += base_spacing) {
+			int num_rays = (int)(12 * intensity);
+			float ray_width = 40.0f * intensity;
+			
+			for (int i = 0; i < num_rays; i++) {
+				float angle = ((float)i / (float)num_rays) * (float)M_PI * 0.5f;
+				float offset = fmodf(animation_offset * 20.0f, 200.0f);
+				float start_dist = -200.0f + offset + i * 60.0f;
+				
+				// Calculate ray direction
+				float dx = cosf(angle + (float)M_PI * 0.25f);
+				float dy = sinf(angle + (float)M_PI * 0.25f);
+				
+				// Ray fades along its length
+				for (int seg = 0; seg < 5; seg++) {
+					float dist = start_dist + seg * 100.0f;
+					float next_dist = start_dist + (seg + 1) * 100.0f;
+					
+					float alpha1 = opacity * (1.0f - (float)seg / 5.0f);
+					float alpha2 = opacity * (1.0f - (float)(seg + 1) / 5.0f);
+					
+					struct vec4 ray_color1 = art_color_vec;
+					struct vec4 ray_color2 = art_color_vec;
+					ray_color1.w = alpha1;
+					ray_color2.w = alpha2;
+					
+					// Draw ray segment
+					gs_effect_set_vec4(color_param, &ray_color1);
+					while (gs_effect_loop(solid, "Solid")) {
+						gs_render_start(true);
+						gs_vertex2f(dist * dx - ray_width * dy, dist * dy + ray_width * dx);
+						gs_vertex2f(dist * dx + ray_width * dy, dist * dy - ray_width * dx);
+						
+						gs_effect_set_vec4(color_param, &ray_color2);
+						gs_vertex2f(next_dist * dx - ray_width * dy, next_dist * dy + ray_width * dx);
+						gs_vertex2f(next_dist * dx + ray_width * dy, next_dist * dy - ray_width * dx);
+						gs_render_stop(GS_TRISTRIP);
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_BOKEH: {
+			// Bokeh blur circles - soft, defocused light circles
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+			
+			int num_bokeh = (int)(25 * intensity);
+			
+			for (int i = 0; i < num_bokeh; i++) {
+				// Pseudo-random positions
+				float seed = (float)i * 17.951f;
+				float px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
+				float py = fmodf(cosf(seed * 1.732f) * 43758.5453f + height * 0.5f, height);
+				
+				// Slow drift animation
+				px += sinf(animation_offset * 0.3f + seed) * 30.0f;
+				py += cosf(animation_offset * 0.2f + seed * 1.5f) * 20.0f;
+				
+				// Varying sizes
+				float size = (15.0f + sinf(seed * 3.14f) * 10.0f) * intensity;
+				
+				// Pulsating opacity
+				float pulse = (sinf(animation_offset + seed) * 0.3f + 0.7f) * opacity * 0.4f;
+				
+				struct vec4 bokeh_color = art_color_vec;
+				bokeh_color.w = pulse;
+				gs_effect_set_vec4(color_param, &bokeh_color);
+				
+				// Draw soft bokeh circle using octagon approximation
+				while (gs_effect_loop(solid, "Solid")) {
 					gs_render_start(true);
-					gs_vertex2f(0.0f, py);
-					gs_vertex2f(width, py);
-					gs_vertex2f(0.0f, py + line_thickness);
-					gs_vertex2f(width, py + line_thickness);
+					int segments = 8;
+					for (int j = 0; j <= segments; j++) {
+						float angle = ((float)j / (float)segments) * 2.0f * (float)M_PI;
+						float cx = px + cosf(angle) * size;
+						float cy = py + sinf(angle) * size;
+						gs_vertex2f(px, py);
+						gs_vertex2f(cx, cy);
+					}
 					gs_render_stop(GS_TRISTRIP);
 				}
 			}
 			break;
 		}
 		
-		case PATTERN_LINES_VERTICAL: {
-			// Animated vertical lines
-			float anim_offset_val = fmodf(animation_offset, base_spacing * 2.0f);
-			float line_thickness = 2.0f * scale;
+		case ART_SPARKLES: {
+			// Sparkling stars with twinkling effect
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
 			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float px = -anim_offset_val; px < width + base_spacing; px += base_spacing) {
-					gs_vertex2f(px, 0.0f);
-					gs_vertex2f(px + line_thickness, 0.0f);
-					gs_vertex2f(px, height);
-					gs_vertex2f(px + line_thickness, height);
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_LINES_DIAGONAL: {
-			// Animated diagonal lines
-			float anim_offset_val = fmodf(animation_offset, base_spacing * 1.414f);
-			float line_thickness = 2.0f * scale;
+			int num_sparkles = (int)(60 * intensity);
 			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float i = -height; i < width + height; i += base_spacing) {
-					float x1 = i - anim_offset_val;
-					float y1 = 0.0f;
-					float x2 = x1 + height;
-					float y2 = height;
-					
-					float dx = x2 - x1;
-					float dy = y2 - y1;
-					float len = sqrtf(dx * dx + dy * dy);
-					float nx = -dy / len * line_thickness;
-					float ny = dx / len * line_thickness;
-					
-					gs_vertex2f(x1, y1);
-					gs_vertex2f(x1 + nx, y1 + ny);
-					gs_vertex2f(x2, y2);
-					gs_vertex2f(x2 + nx, y2 + ny);
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_GRID: {
-			// Animated grid
-			float anim_x = fmodf(animation_offset, base_spacing);
-			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
-			float line_thickness = 1.5f * scale;
-			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
-					gs_vertex2f(0.0f, py);
-					gs_vertex2f(width, py);
-					gs_vertex2f(0.0f, py + line_thickness);
-					gs_vertex2f(width, py + line_thickness);
-				}
-				gs_render_stop(GS_TRISTRIP);
+			for (int i = 0; i < num_sparkles; i++) {
+				// Fixed sparkle positions
+				float seed = (float)i * 23.140f;
+				float px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
+				float py = fmodf(cosf(seed * 1.618f) * 43758.5453f + height * 0.5f, height);
 				
-				gs_render_start(true);
-				for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
-					gs_vertex2f(px, 0.0f);
-					gs_vertex2f(px + line_thickness, 0.0f);
-					gs_vertex2f(px, height);
-					gs_vertex2f(px + line_thickness, height);
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_CIRCLES: {
-			// Animated circles (outlines)
-			float anim_x = fmodf(animation_offset, base_spacing);
-			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
-			float circle_radius = 8.0f * scale;
-			float line_width = 1.5f * scale;
-			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
-					for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
-						int segments = 16;
-						for (int i = 0; i < segments; i++) {
-							float angle1 = (float)i / (float)segments * 2.0f * (float)M_PI;
-							float angle2 = (float)(i + 1) / (float)segments * 2.0f * (float)M_PI;
-							
-							float x1_out = px + circle_radius * cosf(angle1);
-							float y1_out = py + circle_radius * sinf(angle1);
-							float x2_out = px + circle_radius * cosf(angle2);
-							float y2_out = py + circle_radius * sinf(angle2);
-							
-							float x1_in = px + (circle_radius - line_width) * cosf(angle1);
-							float y1_in = py + (circle_radius - line_width) * sinf(angle1);
-							float x2_in = px + (circle_radius - line_width) * cosf(angle2);
-							float y2_in = py + (circle_radius - line_width) * sinf(angle2);
-							
-							gs_vertex2f(x1_out, y1_out);
-							gs_vertex2f(x1_in, y1_in);
-							gs_vertex2f(x2_out, y2_out);
-							gs_vertex2f(x2_in, y2_in);
-						}
-					}
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_HEXAGONS: {
-			// Animated hexagons
-			float hex_size = 15.0f * scale;
-			float hex_spacing = hex_size * 1.732f;
-			float anim_x = fmodf(animation_offset, hex_spacing);
-			float anim_y = fmodf(animation_offset * 0.577f, hex_spacing);
-			float line_width = 1.5f * scale;
-			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float row = -1; row * hex_spacing < height + hex_spacing * 2; row++) {
-					float py = row * hex_spacing * 0.866f - anim_y;
-					float offset = (int)row % 2 == 0 ? 0.0f : hex_spacing * 0.5f;
+				// Twinkling animation - rapid blink
+				float twinkle_speed = 3.0f + sinf(seed) * 2.0f;
+				float twinkle = sinf(animation_offset * twinkle_speed + seed * 10.0f);
+				twinkle = twinkle * twinkle; // Square for sharper twinkle
+				float alpha = twinkle * opacity;
+				
+				if (alpha > 0.1f) {
+					struct vec4 sparkle_color = art_color_vec;
+					sparkle_color.w = alpha;
+					gs_effect_set_vec4(color_param, &sparkle_color);
 					
-					for (float col = -1; col * hex_spacing < width + hex_spacing * 2; col++) {
-						float px = col * hex_spacing + offset - anim_x;
-						
-						for (int i = 0; i < 6; i++) {
-							float angle1 = (float)i / 6.0f * 2.0f * (float)M_PI;
-							float angle2 = (float)(i + 1) / 6.0f * 2.0f * (float)M_PI;
-							
-							float x1_out = px + hex_size * cosf(angle1);
-							float y1_out = py + hex_size * sinf(angle1);
-							float x2_out = px + hex_size * cosf(angle2);
-							float y2_out = py + hex_size * sinf(angle2);
-							
-							float x1_in = px + (hex_size - line_width) * cosf(angle1);
-							float y1_in = py + (hex_size - line_width) * sinf(angle1);
-							float x2_in = px + (hex_size - line_width) * cosf(angle2);
-							float y2_in = py + (hex_size - line_width) * sinf(angle2);
-							
-							gs_vertex2f(x1_out, y1_out);
-							gs_vertex2f(x1_in, y1_in);
-							gs_vertex2f(x2_out, y2_out);
-							gs_vertex2f(x2_in, y2_in);
-						}
-					}
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_WAVES: {
-			// Animated sine waves
-			float wave_spacing = 40.0f * scale;
-			float wave_amplitude = 10.0f * scale;
-			float anim_offset_val = fmodf(animation_offset * 0.1f, wave_spacing);
-			float line_thickness = 2.0f * scale;
-			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float wave_y = 0; wave_y < height; wave_y += wave_spacing) {
-					for (float px = 0; px < width; px += 5.0f) {
-						float py = wave_y + wave_amplitude * sinf((px + anim_offset_val) * 0.05f);
-						float next_px = px + 5.0f;
-						float next_py = wave_y + wave_amplitude * sinf((next_px + anim_offset_val) * 0.05f);
-						
-						gs_vertex2f(px, py);
-						gs_vertex2f(px, py + line_thickness);
-						gs_vertex2f(next_px, next_py);
-						gs_vertex2f(next_px, next_py + line_thickness);
-					}
-				}
-				gs_render_stop(GS_TRISTRIP);
-			}
-			break;
-		}
-		
-		case PATTERN_TRIANGLES: {
-			// Animated triangles
-			float tri_size = 20.0f * scale;
-			float tri_spacing = tri_size * 1.5f;
-			float anim_x = fmodf(animation_offset, tri_spacing);
-			float anim_y = fmodf(animation_offset * 0.7f, tri_spacing);
-			
-			while (gs_effect_loop(solid, "Solid")) {
-				gs_render_start(true);
-				for (float row = -1; row * tri_spacing < height + tri_spacing * 2; row++) {
-					float py = row * tri_spacing - anim_y;
+					// Draw star shape (4-pointed cross)
+					float size = (2.0f + sinf(seed * 7.0f)) * intensity * twinkle;
+					float cross_length = size * 3.0f;
+					float cross_width = size * 0.3f;
 					
-					for (float col = -1; col * tri_spacing < width + tri_spacing * 2; col++) {
-						float px = col * tri_spacing - anim_x;
-						bool flip = ((int)row + (int)col) % 2 == 1;
+					while (gs_effect_loop(solid, "Solid")) {
+						// Horizontal beam
+						gs_render_start(true);
+						gs_vertex2f(px - cross_length, py - cross_width);
+						gs_vertex2f(px + cross_length, py - cross_width);
+						gs_vertex2f(px - cross_length, py + cross_width);
+						gs_vertex2f(px + cross_length, py + cross_width);
+						gs_render_stop(GS_TRISTRIP);
 						
-						if (flip) {
-							gs_vertex2f(px, py + tri_size);
-							gs_vertex2f(px + tri_size * 0.5f, py);
-							gs_vertex2f(px - tri_size * 0.5f, py);
-						} else {
+						// Vertical beam
+						gs_render_start(true);
+						gs_vertex2f(px - cross_width, py - cross_length);
+						gs_vertex2f(px + cross_width, py - cross_length);
+						gs_vertex2f(px - cross_width, py + cross_length);
+						gs_vertex2f(px + cross_width, py + cross_length);
+						gs_render_stop(GS_TRISTRIP);
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_GLOW_ORBS: {
+			// Glowing orbs with soft falloff
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+			
+			int num_orbs = (int)(15 * intensity);
+			
+			for (int i = 0; i < num_orbs; i++) {
+				// Pseudo-random positions
+				float seed = (float)i * 31.415f;
+				float base_px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
+				float base_py = fmodf(cosf(seed * 2.236f) * 43758.5453f + height * 0.5f, height);
+				
+				// Floating animation with circular motion
+				float orbit_radius = 40.0f;
+				float orbit_speed = 0.5f + sinf(seed) * 0.3f;
+				float px = base_px + cosf(animation_offset * orbit_speed + seed) * orbit_radius;
+				float py = base_py + sinf(animation_offset * orbit_speed + seed * 1.5f) * orbit_radius * 0.7f;
+				
+				// Pulsating glow
+				float pulse = (sinf(animation_offset * 1.5f + seed * 5.0f) * 0.3f + 0.7f);
+				float size = (25.0f + sinf(seed * 5.0f) * 10.0f) * intensity;
+				
+				// Multi-layer glow effect (core + halos)
+				for (int layer = 0; layer < 4; layer++) {
+					float layer_size = size * (1.0f + layer * 0.7f);
+					float layer_opacity = opacity * pulse * (0.4f / (1.0f + layer * 0.5f));
+					
+					struct vec4 orb_color = art_color_vec;
+					orb_color.w = layer_opacity;
+					gs_effect_set_vec4(color_param, &orb_color);
+					
+					while (gs_effect_loop(solid, "Solid")) {
+						gs_render_start(true);
+						int segments = 12;
+						for (int j = 0; j <= segments; j++) {
+							float angle = ((float)j / (float)segments) * 2.0f * (float)M_PI;
+							float cx = px + cosf(angle) * layer_size;
+							float cy = py + sinf(angle) * layer_size;
 							gs_vertex2f(px, py);
-							gs_vertex2f(px + tri_size * 0.5f, py + tri_size);
-							gs_vertex2f(px - tri_size * 0.5f, py + tri_size);
+							gs_vertex2f(cx, cy);
+						}
+						gs_render_stop(GS_TRISTRIP);
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_LIGHT_STREAKS: {
+			// Horizontal light streaks moving across
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+			
+			int num_streaks = (int)(10 * intensity);
+			
+			for (int i = 0; i < num_streaks; i++) {
+				// Staggered vertical positions
+				float seed = (float)i * 19.739f;
+				float py = (height / (float)num_streaks) * (float)i + sinf(seed) * 20.0f;
+				
+				// Animate streaks moving right to left
+				float speed = 1.5f + sinf(seed) * 0.5f;
+				float streak_pos = fmodf(animation_offset * speed * 30.0f + seed * 100.0f, width + 200.0f) - 100.0f;
+				
+				// Streak dimensions
+				float streak_length = 80.0f + sinf(seed * 3.0f) * 40.0f;
+				float streak_height = 2.0f + sinf(seed * 7.0f) * 1.0f;
+				
+				// Fade in/out based on position
+				float streak_alpha = opacity;
+				if (streak_pos < 0.0f) {
+					streak_alpha *= (1.0f + streak_pos / 100.0f);
+				} else if (streak_pos > width - streak_length) {
+					streak_alpha *= (width - streak_pos) / 100.0f;
+				}
+				
+				if (streak_alpha > 0.05f) {
+					// Draw streak with gradient (bright center, fading edges)
+					struct vec4 streak_color_center = art_color_vec;
+					struct vec4 streak_color_edge = art_color_vec;
+					streak_color_center.w = streak_alpha;
+					streak_color_edge.w = streak_alpha * 0.2f;
+					
+					while (gs_effect_loop(solid, "Solid")) {
+						// Main bright core
+						gs_effect_set_vec4(color_param, &streak_color_center);
+						gs_render_start(true);
+						gs_vertex2f(streak_pos, py - streak_height);
+						gs_vertex2f(streak_pos + streak_length, py - streak_height);
+						gs_vertex2f(streak_pos, py + streak_height);
+						gs_vertex2f(streak_pos + streak_length, py + streak_height);
+						gs_render_stop(GS_TRISTRIP);
+						
+						// Soft halo around streak
+						gs_effect_set_vec4(color_param, &streak_color_edge);
+						gs_render_start(true);
+						gs_vertex2f(streak_pos - 10.0f, py - streak_height * 3.0f);
+						gs_vertex2f(streak_pos + streak_length + 10.0f, py - streak_height * 3.0f);
+						gs_vertex2f(streak_pos - 10.0f, py + streak_height * 3.0f);
+						gs_vertex2f(streak_pos + streak_length + 10.0f, py + streak_height * 3.0f);
+						gs_render_stop(GS_TRISTRIP);
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_SHIMMER: {
+			// Shimmering overlay effect - like light reflecting off water
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+			
+			// Create wave-like shimmer across the surface
+			int num_waves = (int)(20 * intensity);
+			
+			for (int i = 0; i < num_waves; i++) {
+				float seed = (float)i * 13.579f;
+				float base_y = (height / (float)num_waves) * (float)i;
+				
+				// Wave parameters
+				float wave_frequency = 0.05f + sinf(seed) * 0.03f;
+				float wave_amplitude = 15.0f + cosf(seed * 2.0f) * 10.0f;
+				float wave_speed = 0.5f + sinf(seed * 3.0f) * 0.3f;
+				
+				// Build a shimmering wave line
+				while (gs_effect_loop(solid, "Solid")) {
+					gs_render_start(true);
+					for (float px = 0; px < width; px += 8.0f) {
+						float py = base_y + wave_amplitude * sinf(px * wave_frequency + animation_offset * wave_speed + seed);
+						
+						// Shimmer intensity varies along wave
+						float shimmer_intensity = (sinf(px * 0.1f + animation_offset * 2.0f + seed * 10.0f) * 0.5f + 0.5f);
+						float alpha = opacity * shimmer_intensity * 0.6f;
+						
+						struct vec4 shimmer_color = art_color_vec;
+						shimmer_color.w = alpha;
+						gs_effect_set_vec4(color_param, &shimmer_color);
+						
+						float thickness = 2.0f + shimmer_intensity * 2.0f;
+						
+						gs_vertex2f(px, py - thickness);
+						gs_vertex2f(px, py + thickness);
+					}
+					gs_render_stop(GS_TRISTRIP);
+				}
+			}
+			break;
+		}
+		
+		case ART_ENERGY_FLOW: {
+			// Flowing energy lines - like electrical current or data streams
+			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+			
+			int num_flows = (int)(8 * intensity);
+			
+			for (int i = 0; i < num_flows; i++) {
+				float seed = (float)i * 27.183f;
+				float lane_y = (height / (float)num_flows) * (float)i + sinf(seed) * 10.0f;
+				
+				// Energy pulse traveling along the flow line
+				int num_pulses = 3;
+				for (int p = 0; p < num_pulses; p++) {
+					float pulse_seed = seed + (float)p * 100.0f;
+					float pulse_speed = 1.0f + sinf(pulse_seed) * 0.5f;
+					float pulse_pos = fmodf(animation_offset * pulse_speed * 40.0f + pulse_seed * 200.0f, width + 150.0f) - 75.0f;
+					
+					// Pulse dimensions
+					float pulse_length = 60.0f + sinf(pulse_seed * 2.0f) * 20.0f;
+					float pulse_thickness = 3.0f;
+					
+					// Draw energy pulse with leading glow
+					for (int seg = 0; seg < 5; seg++) {
+						float seg_start = pulse_pos + (float)seg * pulse_length * 0.2f;
+						float seg_end = seg_start + pulse_length * 0.25f;
+						
+						// Intensity peaks at the leading edge
+						float seg_intensity = (4 - seg) / 4.0f;
+						float seg_alpha = opacity * seg_intensity * 0.7f;
+						
+						// Add sine wave perturbation
+						float wave_offset1 = sinf(seg_start * 0.1f + animation_offset + seed) * 8.0f;
+						float wave_offset2 = sinf(seg_end * 0.1f + animation_offset + seed) * 8.0f;
+						
+						struct vec4 flow_color = art_color_vec;
+						flow_color.w = seg_alpha;
+						gs_effect_set_vec4(color_param, &flow_color);
+						
+						while (gs_effect_loop(solid, "Solid")) {
+							gs_render_start(true);
+							gs_vertex2f(seg_start, lane_y + wave_offset1 - pulse_thickness);
+							gs_vertex2f(seg_end, lane_y + wave_offset2 - pulse_thickness);
+							gs_vertex2f(seg_start, lane_y + wave_offset1 + pulse_thickness);
+							gs_vertex2f(seg_end, lane_y + wave_offset2 + pulse_thickness);
+							gs_render_stop(GS_TRISTRIP);
 						}
 					}
 				}
-				gs_render_stop(GS_TRIS);
 			}
 			break;
 		}

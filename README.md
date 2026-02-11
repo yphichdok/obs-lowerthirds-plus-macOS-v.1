@@ -24,6 +24,7 @@ Professional lower thirds plugin with 5 tabbed profiles, 16 animation styles, an
 - **Logo Support** - Optional left-side logo with size and opacity controls
 - **Gradient Backgrounds** - 4 gradient directions or solid colors
 - **Background Images** - Custom PNG/JPG backgrounds
+- **Artistic Effects** - 8 animated background effects (particles, light rays, bokeh, sparkles, glowing orbs, light streaks, shimmer, energy flow)
 - **Right-Side Text** - Optional right-aligned text fields
 - **Stable Positioning** - Text and logo maintain exact positions when resizing
 
@@ -132,6 +133,16 @@ The DMG includes:
 - Solid color or gradient (4 directions)
 - Custom background image (PNG, JPG, BMP)
 - Opacity control (0-100%)
+- **Artistic Effects** - 8 animated effects:
+  - ✦ Particles (Floating) - Dynamic floating particle system
+  - ☀ Light Rays - Diagonal light rays emanating from corner
+  - ◉ Bokeh Blur - Soft, defocused light circles
+  - ✨ Sparkles - Twinkling star effects
+  - ⊙ Glow Orbs - Glowing orbs with soft falloff
+  - ━ Light Streaks - Horizontal light streaks moving across
+  - ◈ Shimmer - Shimmering overlay like light on water
+  - ⚡ Energy Flow - Flowing energy lines like electrical current
+  - Adjustable color, opacity (0-100%), intensity (0.5-2.0), and animation speed
 
 ### 📐 Layout & Positioning
 - Bar height: 80-300px (default: 200px)
@@ -271,6 +282,7 @@ brew install cmake
 - **Text highlight boxes** with rounded corners, custom colors, and opacity
 - Logo support (left side, optional) with independent animation and spin effect
 - Background images and gradients
+- **8 Artistic background effects** - Particles, light rays, bokeh, sparkles, glow orbs, light streaks, shimmer, energy flow
 - Right-side text fields (optional)
 - Preview mode that stays open during configuration
 - Auto-hide functionality
