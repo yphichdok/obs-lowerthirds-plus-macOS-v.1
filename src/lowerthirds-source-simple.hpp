@@ -33,6 +33,20 @@ enum GradientType {
 	GRADIENT_DIAGONAL_BL_TR = 4
 };
 
+// Background pattern options
+enum BackgroundPattern {
+	PATTERN_NONE = 0,
+	PATTERN_DOTS = 1,
+	PATTERN_LINES_HORIZONTAL = 2,
+	PATTERN_LINES_VERTICAL = 3,
+	PATTERN_LINES_DIAGONAL = 4,
+	PATTERN_GRID = 5,
+	PATTERN_CIRCLES = 6,
+	PATTERN_HEXAGONS = 7,
+	PATTERN_WAVES = 8,
+	PATTERN_TRIANGLES = 9
+};
+
 struct lowerthirds_source {
 	obs_source_t *source;
 	
@@ -105,6 +119,15 @@ struct lowerthirds_source {
 	GradientType gradient_type;
 	uint32_t gradient_color2;
 	
+	// Background pattern properties
+	BackgroundPattern bg_pattern;
+	uint32_t pattern_color;
+	int pattern_opacity;
+	float pattern_scale;
+	float pattern_speed;
+	bool pattern_animate;
+	float pattern_animation_offset;  // For animation state
+	
 	// Responsive scaling
 	bool auto_scale;
 	float scale_factor;
@@ -139,6 +162,8 @@ struct lowerthirds_source {
 		struct vec4 color1, struct vec4 color2, GradientType type);
 	void draw_logo_with_alpha(gs_texture_t *texture, float width, float height, float alpha);
 	void draw_rounded_rect(float x, float y, float width, float height, float radius, uint32_t color, float opacity);
+	void draw_background_pattern(float x, float y, float width, float height, BackgroundPattern pattern, 
+		uint32_t color, float opacity, float scale, float animation_offset);
 };
 
 void register_lowerthirds_source();

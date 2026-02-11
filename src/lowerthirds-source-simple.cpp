@@ -202,6 +202,14 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	obs_data_set_default_int(settings, "text_highlight_corner_radius", 8);
 	obs_data_set_default_int(settings, "text_highlight_padding_horizontal", 20);
 	obs_data_set_default_int(settings, "text_highlight_padding_vertical", 10);
+	
+	// Background pattern defaults
+	obs_data_set_default_int(settings, "bg_pattern", PATTERN_NONE);
+	obs_data_set_default_int(settings, "pattern_color", 0xFFFFFFFF); // White (ABGR format)
+	obs_data_set_default_int(settings, "pattern_opacity", 15); // Subtle by default
+	obs_data_set_default_double(settings, "pattern_scale", 1.0); // Normal size
+	obs_data_set_default_double(settings, "pattern_speed", 20.0); // Slow movement
+	obs_data_set_default_bool(settings, "pattern_animate", true); // Animated by default
 }
 
 // Button callback for Play Profile 1
@@ -636,6 +644,26 @@ static obs_properties_t *lowerthirds_get_properties(void *data)
 	obs_properties_add_path(background_group, "bg_image", "Background Image (Optional)", 
 		OBS_PATH_FILE, "Image Files (*.png *.jpg *.jpeg *.bmp);;All Files (*.*)", NULL);
 	
+	// Background pattern options
+	obs_property_t *pattern_list = obs_properties_add_list(background_group, "bg_pattern", 
+		"🎨 Art Pattern", OBS_COMBO_TYPE_LIST, OBS_COMBO_FORMAT_INT);
+	obs_property_list_add_int(pattern_list, "None", PATTERN_NONE);
+	obs_property_list_add_int(pattern_list, "● Dots", PATTERN_DOTS);
+	obs_property_list_add_int(pattern_list, "─ Lines (Horizontal)", PATTERN_LINES_HORIZONTAL);
+	obs_property_list_add_int(pattern_list, "│ Lines (Vertical)", PATTERN_LINES_VERTICAL);
+	obs_property_list_add_int(pattern_list, "╱ Lines (Diagonal)", PATTERN_LINES_DIAGONAL);
+	obs_property_list_add_int(pattern_list, "┼ Grid", PATTERN_GRID);
+	obs_property_list_add_int(pattern_list, "○ Circles", PATTERN_CIRCLES);
+	obs_property_list_add_int(pattern_list, "⬡ Hexagons", PATTERN_HEXAGONS);
+	obs_property_list_add_int(pattern_list, "～ Waves", PATTERN_WAVES);
+	obs_property_list_add_int(pattern_list, "△ Triangles", PATTERN_TRIANGLES);
+	
+	obs_properties_add_color(background_group, "pattern_color", "   Pattern Color");
+	obs_properties_add_int_slider(background_group, "pattern_opacity", "   Pattern Opacity (%)", 0, 100, 1);
+	obs_properties_add_float_slider(background_group, "pattern_scale", "   Pattern Scale", 0.5, 3.0, 0.1);
+	obs_properties_add_bool(background_group, "pattern_animate", "   🎬 Animate Pattern (Live Effect)");
+	obs_properties_add_float_slider(background_group, "pattern_speed", "   Animation Speed", 5.0, 100.0, 5.0);
+	
 	obs_properties_add_group(advanced_group, "background_styling", "🎨 Background Styling", 
 		OBS_GROUP_NORMAL, background_group);
 	
@@ -704,6 +732,13 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, text_highlight_padding_vertical(10)
 	, gradient_type(GRADIENT_NONE)
 	, gradient_color2(0xFFD27619)
+	, bg_pattern(PATTERN_NONE)
+	, pattern_color(0xFFFFFFFF)  // White
+	, pattern_opacity(15)
+	, pattern_scale(1.0f)
+	, pattern_speed(20.0f)
+	, pattern_animate(true)
+	, pattern_animation_offset(0.0f)
 	, auto_scale(false)  // OFF by default - keeps consistent pixel sizes
 	, scale_factor(1.0f)
 	, is_visible(false)
@@ -942,6 +977,14 @@ void lowerthirds_source::update(obs_data_t *settings)
 	gradient_type = (GradientType)obs_data_get_int(settings, "gradient_type");
 	gradient_color2 = (uint32_t)obs_data_get_int(settings, "gradient_color2");
 	
+	// Background pattern settings
+	bg_pattern = (BackgroundPattern)obs_data_get_int(settings, "bg_pattern");
+	pattern_color = (uint32_t)obs_data_get_int(settings, "pattern_color");
+	pattern_opacity = (int)obs_data_get_int(settings, "pattern_opacity");
+	pattern_scale = (float)obs_data_get_double(settings, "pattern_scale");
+	pattern_speed = (float)obs_data_get_double(settings, "pattern_speed");
+	pattern_animate = obs_data_get_bool(settings, "pattern_animate");
+	
 	// Text shadow settings
 	text_shadow_enabled = obs_data_get_bool(settings, "text_shadow_enabled");
 	text_shadow_color = (uint32_t)obs_data_get_int(settings, "text_shadow_color");
@@ -1109,6 +1152,14 @@ void lowerthirds_source::tick(float seconds)
 	// Reset timer when in preview mode to ensure smooth restart when preview is disabled
 	if (preview_mode && display_timer > 0.0f) {
 		display_timer = 0.0f;
+	}
+	
+	// Update pattern animation offset for live effect
+	if (pattern_animate && bg_pattern != PATTERN_NONE) {
+		pattern_animation_offset += seconds * pattern_speed;
+		// Wrap around to prevent overflow
+		if (pattern_animation_offset > 10000.0f)
+			pattern_animation_offset = fmodf(pattern_animation_offset, 1000.0f);
 	}
 }
 
@@ -1447,6 +1498,13 @@ void lowerthirds_source::render()
 					gs_render_stop(GS_TRISTRIP);
 				}
 			}
+		}
+		
+		// Draw art pattern overlay (if enabled)
+		if (bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
+			draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
+				bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
+				pattern_scale, pattern_animation_offset);
 		}
 	}
 	
@@ -2551,6 +2609,299 @@ void lowerthirds_source::draw_rounded_rect(float x, float y, float width, float 
 				gs_render_stop(GS_TRIS);
 			}
 		}
+	}
+	
+	gs_matrix_pop();
+}
+
+// Draw background pattern with live animation effects
+void lowerthirds_source::draw_background_pattern(float x, float y, float width, float height, 
+	BackgroundPattern pattern, uint32_t color, float opacity, float scale, float animation_offset)
+{
+	if (opacity < 0.001f || width <= 0.0f || height <= 0.0f || pattern == PATTERN_NONE)
+		return;
+	
+	// Convert color to vec4 (ABGR to RGBA)
+	struct vec4 pattern_color_vec;
+	vec4_set(&pattern_color_vec,
+		((color >> 0) & 0xFF) / 255.0f,   // R
+		((color >> 8) & 0xFF) / 255.0f,   // G
+		((color >> 16) & 0xFF) / 255.0f,  // B
+		opacity                             // A
+	);
+	
+	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
+	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
+	gs_effect_set_vec4(color_param, &pattern_color_vec);
+	
+	gs_matrix_push();
+	gs_matrix_translate3f(x, y, 0.0f);
+	
+	// Base spacing and size scaled by user setting
+	float base_spacing = 30.0f * scale;
+	float base_size = 5.0f * scale;
+	
+	switch (pattern) {
+		case PATTERN_DOTS: {
+			// Animated moving dots
+			float anim_x = fmodf(animation_offset, base_spacing);
+			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
+					for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
+						// Draw small circle as dot
+						int segments = 8;
+						for (int i = 0; i < segments; i++) {
+							float angle1 = (float)i / (float)segments * 2.0f * (float)M_PI;
+							float angle2 = (float)(i + 1) / (float)segments * 2.0f * (float)M_PI;
+							
+							gs_vertex2f(px, py); // Center
+							gs_vertex2f(px + base_size * cosf(angle1), py + base_size * sinf(angle1));
+							gs_vertex2f(px + base_size * cosf(angle2), py + base_size * sinf(angle2));
+						}
+					}
+				}
+				gs_render_stop(GS_TRIS);
+			}
+			break;
+		}
+		
+		case PATTERN_LINES_HORIZONTAL: {
+			// Animated horizontal lines
+			float anim_offset_val = fmodf(animation_offset, base_spacing * 2.0f);
+			float line_thickness = 2.0f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float py = -anim_offset_val; py < height + base_spacing; py += base_spacing) {
+					gs_vertex2f(0.0f, py);
+					gs_vertex2f(width, py);
+					gs_vertex2f(0.0f, py + line_thickness);
+					gs_vertex2f(width, py + line_thickness);
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_LINES_VERTICAL: {
+			// Animated vertical lines
+			float anim_offset_val = fmodf(animation_offset, base_spacing * 2.0f);
+			float line_thickness = 2.0f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float px = -anim_offset_val; px < width + base_spacing; px += base_spacing) {
+					gs_vertex2f(px, 0.0f);
+					gs_vertex2f(px + line_thickness, 0.0f);
+					gs_vertex2f(px, height);
+					gs_vertex2f(px + line_thickness, height);
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_LINES_DIAGONAL: {
+			// Animated diagonal lines
+			float anim_offset_val = fmodf(animation_offset, base_spacing * 1.414f);
+			float line_thickness = 2.0f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float i = -height; i < width + height; i += base_spacing) {
+					float x1 = i - anim_offset_val;
+					float y1 = 0.0f;
+					float x2 = x1 + height;
+					float y2 = height;
+					
+					float dx = x2 - x1;
+					float dy = y2 - y1;
+					float len = sqrtf(dx * dx + dy * dy);
+					float nx = -dy / len * line_thickness;
+					float ny = dx / len * line_thickness;
+					
+					gs_vertex2f(x1, y1);
+					gs_vertex2f(x1 + nx, y1 + ny);
+					gs_vertex2f(x2, y2);
+					gs_vertex2f(x2 + nx, y2 + ny);
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_GRID: {
+			// Animated grid
+			float anim_x = fmodf(animation_offset, base_spacing);
+			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
+			float line_thickness = 1.5f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
+					gs_vertex2f(0.0f, py);
+					gs_vertex2f(width, py);
+					gs_vertex2f(0.0f, py + line_thickness);
+					gs_vertex2f(width, py + line_thickness);
+				}
+				gs_render_stop(GS_TRISTRIP);
+				
+				gs_render_start(true);
+				for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
+					gs_vertex2f(px, 0.0f);
+					gs_vertex2f(px + line_thickness, 0.0f);
+					gs_vertex2f(px, height);
+					gs_vertex2f(px + line_thickness, height);
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_CIRCLES: {
+			// Animated circles (outlines)
+			float anim_x = fmodf(animation_offset, base_spacing);
+			float anim_y = fmodf(animation_offset * 0.7f, base_spacing);
+			float circle_radius = 8.0f * scale;
+			float line_width = 1.5f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float py = -anim_y; py < height + base_spacing; py += base_spacing) {
+					for (float px = -anim_x; px < width + base_spacing; px += base_spacing) {
+						int segments = 16;
+						for (int i = 0; i < segments; i++) {
+							float angle1 = (float)i / (float)segments * 2.0f * (float)M_PI;
+							float angle2 = (float)(i + 1) / (float)segments * 2.0f * (float)M_PI;
+							
+							float x1_out = px + circle_radius * cosf(angle1);
+							float y1_out = py + circle_radius * sinf(angle1);
+							float x2_out = px + circle_radius * cosf(angle2);
+							float y2_out = py + circle_radius * sinf(angle2);
+							
+							float x1_in = px + (circle_radius - line_width) * cosf(angle1);
+							float y1_in = py + (circle_radius - line_width) * sinf(angle1);
+							float x2_in = px + (circle_radius - line_width) * cosf(angle2);
+							float y2_in = py + (circle_radius - line_width) * sinf(angle2);
+							
+							gs_vertex2f(x1_out, y1_out);
+							gs_vertex2f(x1_in, y1_in);
+							gs_vertex2f(x2_out, y2_out);
+							gs_vertex2f(x2_in, y2_in);
+						}
+					}
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_HEXAGONS: {
+			// Animated hexagons
+			float hex_size = 15.0f * scale;
+			float hex_spacing = hex_size * 1.732f;
+			float anim_x = fmodf(animation_offset, hex_spacing);
+			float anim_y = fmodf(animation_offset * 0.577f, hex_spacing);
+			float line_width = 1.5f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float row = -1; row * hex_spacing < height + hex_spacing * 2; row++) {
+					float py = row * hex_spacing * 0.866f - anim_y;
+					float offset = (int)row % 2 == 0 ? 0.0f : hex_spacing * 0.5f;
+					
+					for (float col = -1; col * hex_spacing < width + hex_spacing * 2; col++) {
+						float px = col * hex_spacing + offset - anim_x;
+						
+						for (int i = 0; i < 6; i++) {
+							float angle1 = (float)i / 6.0f * 2.0f * (float)M_PI;
+							float angle2 = (float)(i + 1) / 6.0f * 2.0f * (float)M_PI;
+							
+							float x1_out = px + hex_size * cosf(angle1);
+							float y1_out = py + hex_size * sinf(angle1);
+							float x2_out = px + hex_size * cosf(angle2);
+							float y2_out = py + hex_size * sinf(angle2);
+							
+							float x1_in = px + (hex_size - line_width) * cosf(angle1);
+							float y1_in = py + (hex_size - line_width) * sinf(angle1);
+							float x2_in = px + (hex_size - line_width) * cosf(angle2);
+							float y2_in = py + (hex_size - line_width) * sinf(angle2);
+							
+							gs_vertex2f(x1_out, y1_out);
+							gs_vertex2f(x1_in, y1_in);
+							gs_vertex2f(x2_out, y2_out);
+							gs_vertex2f(x2_in, y2_in);
+						}
+					}
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_WAVES: {
+			// Animated sine waves
+			float wave_spacing = 40.0f * scale;
+			float wave_amplitude = 10.0f * scale;
+			float anim_offset_val = fmodf(animation_offset * 0.1f, wave_spacing);
+			float line_thickness = 2.0f * scale;
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float wave_y = 0; wave_y < height; wave_y += wave_spacing) {
+					for (float px = 0; px < width; px += 5.0f) {
+						float py = wave_y + wave_amplitude * sinf((px + anim_offset_val) * 0.05f);
+						float next_px = px + 5.0f;
+						float next_py = wave_y + wave_amplitude * sinf((next_px + anim_offset_val) * 0.05f);
+						
+						gs_vertex2f(px, py);
+						gs_vertex2f(px, py + line_thickness);
+						gs_vertex2f(next_px, next_py);
+						gs_vertex2f(next_px, next_py + line_thickness);
+					}
+				}
+				gs_render_stop(GS_TRISTRIP);
+			}
+			break;
+		}
+		
+		case PATTERN_TRIANGLES: {
+			// Animated triangles
+			float tri_size = 20.0f * scale;
+			float tri_spacing = tri_size * 1.5f;
+			float anim_x = fmodf(animation_offset, tri_spacing);
+			float anim_y = fmodf(animation_offset * 0.7f, tri_spacing);
+			
+			while (gs_effect_loop(solid, "Solid")) {
+				gs_render_start(true);
+				for (float row = -1; row * tri_spacing < height + tri_spacing * 2; row++) {
+					float py = row * tri_spacing - anim_y;
+					
+					for (float col = -1; col * tri_spacing < width + tri_spacing * 2; col++) {
+						float px = col * tri_spacing - anim_x;
+						bool flip = ((int)row + (int)col) % 2 == 1;
+						
+						if (flip) {
+							gs_vertex2f(px, py + tri_size);
+							gs_vertex2f(px + tri_size * 0.5f, py);
+							gs_vertex2f(px - tri_size * 0.5f, py);
+						} else {
+							gs_vertex2f(px, py);
+							gs_vertex2f(px + tri_size * 0.5f, py + tri_size);
+							gs_vertex2f(px - tri_size * 0.5f, py + tri_size);
+						}
+					}
+				}
+				gs_render_stop(GS_TRIS);
+			}
+			break;
+		}
+		
+		default:
+			break;
 	}
 	
 	gs_matrix_pop();
