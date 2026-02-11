@@ -2634,21 +2634,24 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 	gs_effect_t *solid = obs_get_base_effect(OBS_EFFECT_SOLID);
 	gs_eparam_t *color_param = gs_effect_get_param_by_name(solid, "color");
 	
-	// Push blend state - use additive blending for glowing effects
+	// Push blend state - use soft blending for smooth integration
 	gs_blend_state_push();
 	gs_enable_color(true, true, true, true);
 	gs_enable_blending(true);
+	// Use soft additive blending for better background integration
+	gs_blend_function_separate(
+		GS_BLEND_SRCALPHA, GS_BLEND_ONE,      // RGB: soft additive
+		GS_BLEND_ZERO, GS_BLEND_ONE           // Alpha: preserve
+	);
 	
 	gs_matrix_push();
 	gs_matrix_translate3f(x, y, 0.0f);
 	
 	switch (effect) {
 		case ART_PARTICLES: {
-			// Floating particle system - creates a dynamic, floating particle effect
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending for glow
-			
-			int num_particles = (int)(80 * intensity);
-			float particle_size = 3.0f * intensity;
+			// Floating particle system with smooth radial gradient falloff
+			int num_particles = (int)(60 * intensity);
+			float base_particle_size = 4.0f * intensity;
 			
 			for (int i = 0; i < num_particles; i++) {
 				// Create pseudo-random but deterministic particle positions
@@ -2656,29 +2659,41 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 				float px = fmodf(sinf(seed) * 43758.5453f, width);
 				float py = fmodf(cosf(seed * 1.414f) * 43758.5453f, height);
 				
-				// Animate particles floating up and drifting
-				float speed = fmodf(sinf(seed * 2.718f) * 0.5f + 0.5f, 1.0f);
-				float drift = sinf(animation_offset * 0.5f + seed) * 20.0f;
-				py = fmodf(py - animation_offset * speed * 10.0f + height, height);
+				// Smooth floating animation with ease curves
+				float speed = 0.3f + fmodf(sinf(seed * 2.718f), 0.4f);
+				float drift_phase = animation_offset * 0.3f + seed;
+				float drift = sinf(drift_phase) * 25.0f * cosf(drift_phase * 0.7f);
+				py = fmodf(py - animation_offset * speed * 8.0f + height, height);
 				px = px + drift;
 				
-				// Pulsating opacity
-				float pulse = (sinf(animation_offset * 2.0f + seed) * 0.5f + 0.5f) * opacity;
+				// Smooth pulsating with sine easing
+				float pulse_phase = animation_offset * 1.5f + seed * 3.14159f;
+				float pulse = (sinf(pulse_phase) * 0.4f + 0.6f);
 				
-				// Set color with varying opacity
-				struct vec4 particle_color = art_color_vec;
-				particle_color.w = pulse;
-				gs_effect_set_vec4(color_param, &particle_color);
+				// Varying particle sizes for depth
+				float size_variation = 0.7f + sinf(seed * 7.0f) * 0.5f;
+				float particle_size = base_particle_size * size_variation;
 				
-				// Draw particle as glowing circle (approximated by multiple overlapping quads)
+				// Multi-layer radial gradient for smooth glow
 				while (gs_effect_loop(solid, "Solid")) {
-					for (int layer = 0; layer < 3; layer++) {
-						float size = particle_size * (1.0f + layer * 0.5f);
+					for (int layer = 0; layer < 5; layer++) {
+						float layer_size = particle_size * (1.0f + layer * 0.6f);
+						float layer_alpha = pulse * opacity * powf(1.0f - (float)layer / 5.0f, 2.0f);
+						
+						struct vec4 particle_color = art_color_vec;
+						particle_color.w = layer_alpha * 0.25f; // Softer overall
+						gs_effect_set_vec4(color_param, &particle_color);
+						
+						// Draw as circle approximation with more segments for smoothness
 						gs_render_start(true);
-						gs_vertex2f(px - size, py - size);
-						gs_vertex2f(px + size, py - size);
-						gs_vertex2f(px - size, py + size);
-						gs_vertex2f(px + size, py + size);
+						int segments = 8;
+						for (int s = 0; s <= segments; s++) {
+							float angle = ((float)s / (float)segments) * 2.0f * (float)M_PI;
+							float cx = px + cosf(angle) * layer_size;
+							float cy = py + sinf(angle) * layer_size;
+							gs_vertex2f(px, py);
+							gs_vertex2f(cx, cy);
+						}
 						gs_render_stop(GS_TRISTRIP);
 					}
 				}
@@ -2687,44 +2702,66 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 		}
 		
 		case ART_LIGHT_RAYS: {
-			// Diagonal light rays emanating from corner
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			int num_rays = (int)(12 * intensity);
-			float ray_width = 40.0f * intensity;
+			// Diagonal light rays with smooth gradient falloff
+			int num_rays = (int)(10 * intensity);
+			float base_ray_width = 35.0f * intensity;
 			
 			for (int i = 0; i < num_rays; i++) {
-				float angle = ((float)i / (float)num_rays) * (float)M_PI * 0.5f;
-				float offset = fmodf(animation_offset * 20.0f, 200.0f);
-				float start_dist = -200.0f + offset + i * 60.0f;
+				// Distribute rays evenly across angle range
+				float angle = ((float)i / (float)num_rays) * (float)M_PI * 0.6f - (float)M_PI * 0.1f;
+				
+				// Smooth, slower animation
+				float offset = fmodf(animation_offset * 15.0f, 250.0f);
+				float start_dist = -250.0f + offset + i * 70.0f;
 				
 				// Calculate ray direction
 				float dx = cosf(angle + (float)M_PI * 0.25f);
 				float dy = sinf(angle + (float)M_PI * 0.25f);
 				
-				// Ray fades along its length
-				for (int seg = 0; seg < 5; seg++) {
-					float dist = start_dist + seg * 100.0f;
-					float next_dist = start_dist + (seg + 1) * 100.0f;
+				// Ray fades smoothly along its length with exponential falloff
+				int num_segments = 8;
+				for (int seg = 0; seg < num_segments; seg++) {
+					float t1 = (float)seg / (float)num_segments;
+					float t2 = (float)(seg + 1) / (float)num_segments;
 					
-					float alpha1 = opacity * (1.0f - (float)seg / 5.0f);
-					float alpha2 = opacity * (1.0f - (float)(seg + 1) / 5.0f);
+					float dist1 = start_dist + t1 * 400.0f;
+					float dist2 = start_dist + t2 * 400.0f;
 					
-					struct vec4 ray_color1 = art_color_vec;
-					struct vec4 ray_color2 = art_color_vec;
-					ray_color1.w = alpha1;
-					ray_color2.w = alpha2;
+					// Exponential fade for smoother appearance
+					float alpha1 = opacity * 0.2f * powf(1.0f - t1, 1.5f);
+					float alpha2 = opacity * 0.2f * powf(1.0f - t2, 1.5f);
 					
-					// Draw ray segment
-					gs_effect_set_vec4(color_param, &ray_color1);
+					// Ray width also tapers for more natural look
+					float width1 = base_ray_width * (1.0f - t1 * 0.3f);
+					float width2 = base_ray_width * (1.0f - t2 * 0.3f);
+					
+					// Draw ray with soft edges (center bright, edges fade)
 					while (gs_effect_loop(solid, "Solid")) {
-						gs_render_start(true);
-						gs_vertex2f(dist * dx - ray_width * dy, dist * dy + ray_width * dx);
-						gs_vertex2f(dist * dx + ray_width * dy, dist * dy - ray_width * dx);
+						// Center core of ray
+						struct vec4 ray_color_center = art_color_vec;
+						ray_color_center.w = alpha1 * 1.5f;
+						gs_effect_set_vec4(color_param, &ray_color_center);
 						
-						gs_effect_set_vec4(color_param, &ray_color2);
-						gs_vertex2f(next_dist * dx - ray_width * dy, next_dist * dy + ray_width * dx);
-						gs_vertex2f(next_dist * dx + ray_width * dy, next_dist * dy - ray_width * dx);
+						gs_render_start(true);
+						gs_vertex2f(dist1 * dx, dist1 * dy);
+						gs_vertex2f(dist2 * dx, dist2 * dy);
+						
+						// Soft outer glow layers
+						for (int edge = 0; edge < 2; edge++) {
+							float edge_mult = 1.0f + (edge + 1) * 0.7f;
+							float edge_alpha1 = alpha1 / (edge + 2);
+							float edge_alpha2 = alpha2 / (edge + 2);
+							
+							struct vec4 edge_color1 = art_color_vec;
+							struct vec4 edge_color2 = art_color_vec;
+							edge_color1.w = edge_alpha1;
+							edge_color2.w = edge_alpha2;
+							
+							gs_effect_set_vec4(color_param, &edge_color1);
+							gs_vertex2f(dist1 * dx - width1 * edge_mult * dy, dist1 * dy + width1 * edge_mult * dx);
+							gs_effect_set_vec4(color_param, &edge_color2);
+							gs_vertex2f(dist2 * dx - width2 * edge_mult * dy, dist2 * dy + width2 * edge_mult * dx);
+						}
 						gs_render_stop(GS_TRISTRIP);
 					}
 				}
@@ -2733,10 +2770,8 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 		}
 		
 		case ART_BOKEH: {
-			// Bokeh blur circles - soft, defocused light circles
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			int num_bokeh = (int)(25 * intensity);
+			// Bokeh blur circles with soft radial gradient
+			int num_bokeh = (int)(20 * intensity);
 			
 			for (int i = 0; i < num_bokeh; i++) {
 				// Pseudo-random positions
@@ -2744,119 +2779,30 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 				float px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
 				float py = fmodf(cosf(seed * 1.732f) * 43758.5453f + height * 0.5f, height);
 				
-				// Slow drift animation
-				px += sinf(animation_offset * 0.3f + seed) * 30.0f;
-				py += cosf(animation_offset * 0.2f + seed * 1.5f) * 20.0f;
+				// Very slow, smooth drift animation
+				float drift_phase_x = animation_offset * 0.2f + seed;
+				float drift_phase_y = animation_offset * 0.15f + seed * 1.5f;
+				px += sinf(drift_phase_x) * 35.0f * cosf(drift_phase_x * 0.5f);
+				py += cosf(drift_phase_y) * 25.0f * sinf(drift_phase_y * 0.7f);
 				
-				// Varying sizes
-				float size = (15.0f + sinf(seed * 3.14f) * 10.0f) * intensity;
+				// Varying sizes for depth perception
+				float base_size = (18.0f + sinf(seed * 3.14f) * 12.0f) * intensity;
 				
-				// Pulsating opacity
-				float pulse = (sinf(animation_offset + seed) * 0.3f + 0.7f) * opacity * 0.4f;
+				// Gentle pulsating with smooth sine
+				float pulse_phase = animation_offset * 0.8f + seed;
+				float pulse = (sinf(pulse_phase) * 0.25f + 0.75f);
 				
-				struct vec4 bokeh_color = art_color_vec;
-				bokeh_color.w = pulse;
-				gs_effect_set_vec4(color_param, &bokeh_color);
-				
-				// Draw soft bokeh circle using octagon approximation
+				// Multi-layer soft bokeh with radial gradient
 				while (gs_effect_loop(solid, "Solid")) {
-					gs_render_start(true);
-					int segments = 8;
-					for (int j = 0; j <= segments; j++) {
-						float angle = ((float)j / (float)segments) * 2.0f * (float)M_PI;
-						float cx = px + cosf(angle) * size;
-						float cy = py + sinf(angle) * size;
-						gs_vertex2f(px, py);
-						gs_vertex2f(cx, cy);
-					}
-					gs_render_stop(GS_TRISTRIP);
-				}
-			}
-			break;
-		}
-		
-		case ART_SPARKLES: {
-			// Sparkling stars with twinkling effect
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			int num_sparkles = (int)(60 * intensity);
-			
-			for (int i = 0; i < num_sparkles; i++) {
-				// Fixed sparkle positions
-				float seed = (float)i * 23.140f;
-				float px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
-				float py = fmodf(cosf(seed * 1.618f) * 43758.5453f + height * 0.5f, height);
-				
-				// Twinkling animation - rapid blink
-				float twinkle_speed = 3.0f + sinf(seed) * 2.0f;
-				float twinkle = sinf(animation_offset * twinkle_speed + seed * 10.0f);
-				twinkle = twinkle * twinkle; // Square for sharper twinkle
-				float alpha = twinkle * opacity;
-				
-				if (alpha > 0.1f) {
-					struct vec4 sparkle_color = art_color_vec;
-					sparkle_color.w = alpha;
-					gs_effect_set_vec4(color_param, &sparkle_color);
-					
-					// Draw star shape (4-pointed cross)
-					float size = (2.0f + sinf(seed * 7.0f)) * intensity * twinkle;
-					float cross_length = size * 3.0f;
-					float cross_width = size * 0.3f;
-					
-					while (gs_effect_loop(solid, "Solid")) {
-						// Horizontal beam
-						gs_render_start(true);
-						gs_vertex2f(px - cross_length, py - cross_width);
-						gs_vertex2f(px + cross_length, py - cross_width);
-						gs_vertex2f(px - cross_length, py + cross_width);
-						gs_vertex2f(px + cross_length, py + cross_width);
-						gs_render_stop(GS_TRISTRIP);
+					for (int layer = 0; layer < 4; layer++) {
+						float layer_size = base_size * (1.0f + layer * 0.5f);
+						float layer_alpha = pulse * opacity * 0.15f * powf(1.0f - (float)layer / 4.0f, 2.5f);
 						
-						// Vertical beam
-						gs_render_start(true);
-						gs_vertex2f(px - cross_width, py - cross_length);
-						gs_vertex2f(px + cross_width, py - cross_length);
-						gs_vertex2f(px - cross_width, py + cross_length);
-						gs_vertex2f(px + cross_width, py + cross_length);
-						gs_render_stop(GS_TRISTRIP);
-					}
-				}
-			}
-			break;
-		}
-		
-		case ART_GLOW_ORBS: {
-			// Glowing orbs with soft falloff
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			int num_orbs = (int)(15 * intensity);
-			
-			for (int i = 0; i < num_orbs; i++) {
-				// Pseudo-random positions
-				float seed = (float)i * 31.415f;
-				float base_px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
-				float base_py = fmodf(cosf(seed * 2.236f) * 43758.5453f + height * 0.5f, height);
-				
-				// Floating animation with circular motion
-				float orbit_radius = 40.0f;
-				float orbit_speed = 0.5f + sinf(seed) * 0.3f;
-				float px = base_px + cosf(animation_offset * orbit_speed + seed) * orbit_radius;
-				float py = base_py + sinf(animation_offset * orbit_speed + seed * 1.5f) * orbit_radius * 0.7f;
-				
-				// Pulsating glow
-				float pulse = (sinf(animation_offset * 1.5f + seed * 5.0f) * 0.3f + 0.7f);
-				float size = (25.0f + sinf(seed * 5.0f) * 10.0f) * intensity;
-				
-				// Multi-layer glow effect (core + halos)
-				for (int layer = 0; layer < 4; layer++) {
-					float layer_size = size * (1.0f + layer * 0.7f);
-					float layer_opacity = opacity * pulse * (0.4f / (1.0f + layer * 0.5f));
-					
-					struct vec4 orb_color = art_color_vec;
-					orb_color.w = layer_opacity;
-					gs_effect_set_vec4(color_param, &orb_color);
-					
-					while (gs_effect_loop(solid, "Solid")) {
+						struct vec4 bokeh_color = art_color_vec;
+						bokeh_color.w = layer_alpha;
+						gs_effect_set_vec4(color_param, &bokeh_color);
+						
+						// Draw smooth circle with more segments
 						gs_render_start(true);
 						int segments = 12;
 						for (int j = 0; j <= segments; j++) {
@@ -2873,58 +2819,188 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 			break;
 		}
 		
-		case ART_LIGHT_STREAKS: {
-			// Horizontal light streaks moving across
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
+		case ART_SPARKLES: {
+			// Sparkling stars with smooth twinkling and soft glow
+			int num_sparkles = (int)(50 * intensity);
 			
-			int num_streaks = (int)(10 * intensity);
+			for (int i = 0; i < num_sparkles; i++) {
+				// Fixed sparkle positions
+				float seed = (float)i * 23.140f;
+				float px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
+				float py = fmodf(cosf(seed * 1.618f) * 43758.5453f + height * 0.5f, height);
+				
+				// Smooth twinkling with varied timing
+				float twinkle_speed = 2.0f + sinf(seed) * 1.5f;
+				float twinkle_phase = animation_offset * twinkle_speed + seed * 10.0f;
+				float twinkle_raw = sinf(twinkle_phase) * 0.5f + 0.5f;
+				// Smooth curve for elegant twinkling
+				float twinkle = powf(twinkle_raw, 3.0f);
+				
+				float alpha = twinkle * opacity * 0.6f;
+				
+				if (alpha > 0.05f) {
+					// Varying sparkle sizes
+					float base_size = (2.0f + sinf(seed * 7.0f) * 1.5f) * intensity;
+					float size = base_size * (0.5f + twinkle * 0.5f);
+					
+					// Draw star with soft glow layers
+					while (gs_effect_loop(solid, "Solid")) {
+						for (int layer = 0; layer < 3; layer++) {
+							float layer_mult = 1.0f + layer * 0.8f;
+							float layer_alpha = alpha * powf(1.0f - (float)layer / 3.0f, 2.0f);
+							
+							struct vec4 sparkle_color = art_color_vec;
+							sparkle_color.w = layer_alpha * 0.4f;
+							gs_effect_set_vec4(color_param, &sparkle_color);
+							
+							float cross_length = size * 3.0f * layer_mult;
+							float cross_width = size * 0.4f * layer_mult;
+							
+							// Horizontal beam with soft taper
+							gs_render_start(true);
+							gs_vertex2f(px - cross_length, py - cross_width);
+							gs_vertex2f(px + cross_length, py - cross_width);
+							gs_vertex2f(px - cross_length, py + cross_width);
+							gs_vertex2f(px + cross_length, py + cross_width);
+							gs_render_stop(GS_TRISTRIP);
+							
+							// Vertical beam with soft taper
+							gs_render_start(true);
+							gs_vertex2f(px - cross_width, py - cross_length);
+							gs_vertex2f(px + cross_width, py - cross_length);
+							gs_vertex2f(px - cross_width, py + cross_length);
+							gs_vertex2f(px + cross_width, py + cross_length);
+							gs_render_stop(GS_TRISTRIP);
+							
+							// Add center bright point
+							if (layer == 0) {
+								float point_size = size * 1.5f;
+								sparkle_color.w = alpha * 0.8f;
+								gs_effect_set_vec4(color_param, &sparkle_color);
+								
+								gs_render_start(true);
+								gs_vertex2f(px - point_size, py - point_size);
+								gs_vertex2f(px + point_size, py - point_size);
+								gs_vertex2f(px - point_size, py + point_size);
+								gs_vertex2f(px + point_size, py + point_size);
+								gs_render_stop(GS_TRISTRIP);
+							}
+						}
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_GLOW_ORBS: {
+			// Glowing orbs with smooth radial gradient and gentle motion
+			int num_orbs = (int)(12 * intensity);
+			
+			for (int i = 0; i < num_orbs; i++) {
+				// Pseudo-random positions
+				float seed = (float)i * 31.415f;
+				float base_px = fmodf(sinf(seed) * 43758.5453f + width * 0.5f, width);
+				float base_py = fmodf(cosf(seed * 2.236f) * 43758.5453f + height * 0.5f, height);
+				
+				// Smooth floating animation with figure-eight pattern
+				float orbit_radius = 35.0f;
+				float orbit_speed = 0.3f + sinf(seed) * 0.2f;
+				float phase = animation_offset * orbit_speed + seed;
+				float px = base_px + cosf(phase) * orbit_radius + sinf(phase * 2.0f) * 15.0f;
+				float py = base_py + sinf(phase * 1.3f) * orbit_radius * 0.8f;
+				
+				// Smooth pulsating with sine easing
+				float pulse_phase = animation_offset * 1.0f + seed * 5.0f;
+				float pulse = (sinf(pulse_phase) * 0.2f + 0.8f);
+				
+				// Varying orb sizes
+				float base_size = (22.0f + sinf(seed * 5.0f) * 8.0f) * intensity;
+				
+				// Multi-layer soft glow with exponential falloff
+				while (gs_effect_loop(solid, "Solid")) {
+					for (int layer = 0; layer < 6; layer++) {
+						float layer_size = base_size * (1.0f + layer * 0.5f);
+						float layer_opacity = opacity * pulse * 0.12f * powf(1.0f - (float)layer / 6.0f, 2.5f);
+						
+						struct vec4 orb_color = art_color_vec;
+						orb_color.w = layer_opacity;
+						gs_effect_set_vec4(color_param, &orb_color);
+						
+						gs_render_start(true);
+						int segments = 16;
+						for (int j = 0; j <= segments; j++) {
+							float angle = ((float)j / (float)segments) * 2.0f * (float)M_PI;
+							float cx = px + cosf(angle) * layer_size;
+							float cy = py + sinf(angle) * layer_size;
+							gs_vertex2f(px, py);
+							gs_vertex2f(cx, cy);
+						}
+						gs_render_stop(GS_TRISTRIP);
+					}
+				}
+			}
+			break;
+		}
+		
+		case ART_LIGHT_STREAKS: {
+			// Smooth horizontal light streaks with soft gradients
+			int num_streaks = (int)(8 * intensity);
 			
 			for (int i = 0; i < num_streaks; i++) {
 				// Staggered vertical positions
 				float seed = (float)i * 19.739f;
-				float py = (height / (float)num_streaks) * (float)i + sinf(seed) * 20.0f;
+				float py = (height / (float)num_streaks) * (float)i + sinf(seed) * 15.0f;
 				
-				// Animate streaks moving right to left
-				float speed = 1.5f + sinf(seed) * 0.5f;
-				float streak_pos = fmodf(animation_offset * speed * 30.0f + seed * 100.0f, width + 200.0f) - 100.0f;
+				// Smooth animation with ease
+				float speed = 1.0f + sinf(seed) * 0.4f;
+				float streak_pos = fmodf(animation_offset * speed * 25.0f + seed * 100.0f, width + 250.0f) - 125.0f;
 				
-				// Streak dimensions
-				float streak_length = 80.0f + sinf(seed * 3.0f) * 40.0f;
-				float streak_height = 2.0f + sinf(seed * 7.0f) * 1.0f;
+				// Streak dimensions with variation
+				float streak_length = 90.0f + sinf(seed * 3.0f) * 50.0f;
+				float streak_height = 1.8f + sinf(seed * 7.0f) * 1.2f;
 				
-				// Fade in/out based on position
-				float streak_alpha = opacity;
+				// Smooth fade in/out at edges with smooth curve
+				float streak_alpha = opacity * 0.5f;
+				float fade_distance = 120.0f;
 				if (streak_pos < 0.0f) {
-					streak_alpha *= (1.0f + streak_pos / 100.0f);
+					streak_alpha *= powf((fade_distance + streak_pos) / fade_distance, 2.0f);
 				} else if (streak_pos > width - streak_length) {
-					streak_alpha *= (width - streak_pos) / 100.0f;
+					float over = streak_pos - (width - streak_length);
+					streak_alpha *= powf(1.0f - over / fade_distance, 2.0f);
 				}
 				
-				if (streak_alpha > 0.05f) {
-					// Draw streak with gradient (bright center, fading edges)
-					struct vec4 streak_color_center = art_color_vec;
-					struct vec4 streak_color_edge = art_color_vec;
-					streak_color_center.w = streak_alpha;
-					streak_color_edge.w = streak_alpha * 0.2f;
-					
+				if (streak_alpha > 0.03f) {
+					// Multi-layer gradient for ultra-smooth appearance
 					while (gs_effect_loop(solid, "Solid")) {
-						// Main bright core
-						gs_effect_set_vec4(color_param, &streak_color_center);
-						gs_render_start(true);
-						gs_vertex2f(streak_pos, py - streak_height);
-						gs_vertex2f(streak_pos + streak_length, py - streak_height);
-						gs_vertex2f(streak_pos, py + streak_height);
-						gs_vertex2f(streak_pos + streak_length, py + streak_height);
-						gs_render_stop(GS_TRISTRIP);
-						
-						// Soft halo around streak
-						gs_effect_set_vec4(color_param, &streak_color_edge);
-						gs_render_start(true);
-						gs_vertex2f(streak_pos - 10.0f, py - streak_height * 3.0f);
-						gs_vertex2f(streak_pos + streak_length + 10.0f, py - streak_height * 3.0f);
-						gs_vertex2f(streak_pos - 10.0f, py + streak_height * 3.0f);
-						gs_vertex2f(streak_pos + streak_length + 10.0f, py + streak_height * 3.0f);
-						gs_render_stop(GS_TRISTRIP);
+						for (int layer = 0; layer < 4; layer++) {
+							float layer_height = streak_height * (1.0f + layer * 0.8f);
+							float layer_alpha = streak_alpha * powf(1.0f - (float)layer / 4.0f, 2.0f);
+							
+							struct vec4 streak_color = art_color_vec;
+							streak_color.w = layer_alpha;
+							gs_effect_set_vec4(color_param, &streak_color);
+							
+							// Draw streak with tapered ends
+							gs_render_start(true);
+							// Leading edge fade
+							streak_color.w = layer_alpha * 0.1f;
+							gs_effect_set_vec4(color_param, &streak_color);
+							gs_vertex2f(streak_pos - 20.0f, py - layer_height);
+							gs_vertex2f(streak_pos - 20.0f, py + layer_height);
+							
+							// Main bright body
+							streak_color.w = layer_alpha;
+							gs_effect_set_vec4(color_param, &streak_color);
+							gs_vertex2f(streak_pos + streak_length * 0.3f, py - layer_height);
+							gs_vertex2f(streak_pos + streak_length * 0.3f, py + layer_height);
+							
+							// Trailing edge fade
+							streak_color.w = layer_alpha * 0.3f;
+							gs_effect_set_vec4(color_param, &streak_color);
+							gs_vertex2f(streak_pos + streak_length, py - layer_height);
+							gs_vertex2f(streak_pos + streak_length, py + layer_height);
+							gs_render_stop(GS_TRISTRIP);
+						}
 					}
 				}
 			}
@@ -2932,91 +3008,116 @@ void lowerthirds_source::draw_art_effect(float x, float y, float width, float he
 		}
 		
 		case ART_SHIMMER: {
-			// Shimmering overlay effect - like light reflecting off water
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			// Create wave-like shimmer across the surface
-			int num_waves = (int)(20 * intensity);
+			// Smooth shimmering effect like light on water surface
+			int num_waves = (int)(15 * intensity);
 			
 			for (int i = 0; i < num_waves; i++) {
 				float seed = (float)i * 13.579f;
 				float base_y = (height / (float)num_waves) * (float)i;
 				
-				// Wave parameters
-				float wave_frequency = 0.05f + sinf(seed) * 0.03f;
-				float wave_amplitude = 15.0f + cosf(seed * 2.0f) * 10.0f;
-				float wave_speed = 0.5f + sinf(seed * 3.0f) * 0.3f;
+				// Smooth wave parameters
+				float wave_frequency = 0.04f + sinf(seed) * 0.02f;
+				float wave_amplitude = 12.0f + cosf(seed * 2.0f) * 8.0f;
+				float wave_speed = 0.4f + sinf(seed * 3.0f) * 0.25f;
 				
-				// Build a shimmering wave line
+				// Multi-layer shimmer for depth
 				while (gs_effect_loop(solid, "Solid")) {
-					gs_render_start(true);
-					for (float px = 0; px < width; px += 8.0f) {
-						float py = base_y + wave_amplitude * sinf(px * wave_frequency + animation_offset * wave_speed + seed);
+					for (int layer = 0; layer < 3; layer++) {
+						float layer_mult = 1.0f + layer * 0.3f;
 						
-						// Shimmer intensity varies along wave
-						float shimmer_intensity = (sinf(px * 0.1f + animation_offset * 2.0f + seed * 10.0f) * 0.5f + 0.5f);
-						float alpha = opacity * shimmer_intensity * 0.6f;
-						
-						struct vec4 shimmer_color = art_color_vec;
-						shimmer_color.w = alpha;
-						gs_effect_set_vec4(color_param, &shimmer_color);
-						
-						float thickness = 2.0f + shimmer_intensity * 2.0f;
-						
-						gs_vertex2f(px, py - thickness);
-						gs_vertex2f(px, py + thickness);
+						gs_render_start(true);
+						for (float px = 0; px < width; px += 6.0f) {
+							float wave_phase = px * wave_frequency + animation_offset * wave_speed + seed;
+							float py = base_y + wave_amplitude * sinf(wave_phase) * layer_mult;
+							
+							// Smooth intensity variation with double sine for complexity
+							float shimmer_phase1 = px * 0.08f + animation_offset * 1.5f + seed * 10.0f;
+							float shimmer_phase2 = px * 0.05f - animation_offset * 1.0f + seed * 7.0f;
+							float shimmer_raw = (sinf(shimmer_phase1) + sinf(shimmer_phase2)) * 0.5f;
+							float shimmer_intensity = shimmer_raw * 0.5f + 0.5f;
+							
+							// Smooth alpha with layer falloff
+							float layer_alpha = opacity * shimmer_intensity * 0.35f * powf(1.0f - (float)layer / 3.0f, 1.5f);
+							
+							struct vec4 shimmer_color = art_color_vec;
+							shimmer_color.w = layer_alpha;
+							gs_effect_set_vec4(color_param, &shimmer_color);
+							
+							// Variable thickness based on intensity
+							float thickness = (1.5f + shimmer_intensity * 2.5f) * layer_mult;
+							
+							gs_vertex2f(px, py - thickness);
+							gs_vertex2f(px, py + thickness);
+						}
+						gs_render_stop(GS_TRISTRIP);
 					}
-					gs_render_stop(GS_TRISTRIP);
 				}
 			}
 			break;
 		}
 		
 		case ART_ENERGY_FLOW: {
-			// Flowing energy lines - like electrical current or data streams
-			gs_blend_function(GS_BLEND_ONE, GS_BLEND_ONE); // Additive blending
-			
-			int num_flows = (int)(8 * intensity);
+			// Smooth flowing energy with pulsing gradients
+			int num_flows = (int)(6 * intensity);
 			
 			for (int i = 0; i < num_flows; i++) {
 				float seed = (float)i * 27.183f;
-				float lane_y = (height / (float)num_flows) * (float)i + sinf(seed) * 10.0f;
+				float lane_y = (height / (float)num_flows) * (float)i + sinf(seed) * 8.0f;
 				
-				// Energy pulse traveling along the flow line
-				int num_pulses = 3;
+				// Energy pulses traveling along flow lines
+				int num_pulses = 2;
 				for (int p = 0; p < num_pulses; p++) {
 					float pulse_seed = seed + (float)p * 100.0f;
-					float pulse_speed = 1.0f + sinf(pulse_seed) * 0.5f;
-					float pulse_pos = fmodf(animation_offset * pulse_speed * 40.0f + pulse_seed * 200.0f, width + 150.0f) - 75.0f;
+					float pulse_speed = 0.8f + sinf(pulse_seed) * 0.4f;
+					float pulse_pos = fmodf(animation_offset * pulse_speed * 35.0f + pulse_seed * 200.0f, width + 180.0f) - 90.0f;
 					
 					// Pulse dimensions
-					float pulse_length = 60.0f + sinf(pulse_seed * 2.0f) * 20.0f;
-					float pulse_thickness = 3.0f;
+					float pulse_length = 70.0f + sinf(pulse_seed * 2.0f) * 25.0f;
+					float base_thickness = 2.5f * intensity;
 					
-					// Draw energy pulse with leading glow
-					for (int seg = 0; seg < 5; seg++) {
-						float seg_start = pulse_pos + (float)seg * pulse_length * 0.2f;
-						float seg_end = seg_start + pulse_length * 0.25f;
+					// Draw smooth gradient pulse with multiple layers
+					int num_segments = 8;
+					for (int seg = 0; seg < num_segments; seg++) {
+						float t1 = (float)seg / (float)num_segments;
+						float t2 = (float)(seg + 1) / (float)num_segments;
 						
-						// Intensity peaks at the leading edge
-						float seg_intensity = (4 - seg) / 4.0f;
-						float seg_alpha = opacity * seg_intensity * 0.7f;
+						float seg_start = pulse_pos + t1 * pulse_length;
+						float seg_end = pulse_pos + t2 * pulse_length;
 						
-						// Add sine wave perturbation
-						float wave_offset1 = sinf(seg_start * 0.1f + animation_offset + seed) * 8.0f;
-						float wave_offset2 = sinf(seg_end * 0.1f + animation_offset + seed) * 8.0f;
+						// Smooth intensity curve - peaks in the middle, fades at ends
+						float peak_pos = 0.3f; // Peak near front
+						float intensity1 = 1.0f - powf(fabsf(t1 - peak_pos) / (1.0f - peak_pos), 1.5f);
+						float intensity2 = 1.0f - powf(fabsf(t2 - peak_pos) / (1.0f - peak_pos), 1.5f);
 						
-						struct vec4 flow_color = art_color_vec;
-						flow_color.w = seg_alpha;
-						gs_effect_set_vec4(color_param, &flow_color);
+						// Smooth sine wave perturbation
+						float wave_phase1 = seg_start * 0.08f + animation_offset * 0.7f + seed;
+						float wave_phase2 = seg_end * 0.08f + animation_offset * 0.7f + seed;
+						float wave_offset1 = sinf(wave_phase1) * 6.0f;
+						float wave_offset2 = sinf(wave_phase2) * 6.0f;
 						
+						// Multi-layer for soft glow
 						while (gs_effect_loop(solid, "Solid")) {
-							gs_render_start(true);
-							gs_vertex2f(seg_start, lane_y + wave_offset1 - pulse_thickness);
-							gs_vertex2f(seg_end, lane_y + wave_offset2 - pulse_thickness);
-							gs_vertex2f(seg_start, lane_y + wave_offset1 + pulse_thickness);
-							gs_vertex2f(seg_end, lane_y + wave_offset2 + pulse_thickness);
-							gs_render_stop(GS_TRISTRIP);
+							for (int layer = 0; layer < 3; layer++) {
+								float layer_mult = 1.0f + layer * 0.6f;
+								float layer_thickness = base_thickness * layer_mult;
+								
+								float alpha1 = opacity * intensity1 * 0.3f / (1.0f + layer * 0.5f);
+								float alpha2 = opacity * intensity2 * 0.3f / (1.0f + layer * 0.5f);
+								
+								struct vec4 flow_color1 = art_color_vec;
+								struct vec4 flow_color2 = art_color_vec;
+								flow_color1.w = alpha1;
+								flow_color2.w = alpha2;
+								
+								gs_render_start(true);
+								gs_effect_set_vec4(color_param, &flow_color1);
+								gs_vertex2f(seg_start, lane_y + wave_offset1 - layer_thickness);
+								gs_vertex2f(seg_start, lane_y + wave_offset1 + layer_thickness);
+								gs_effect_set_vec4(color_param, &flow_color2);
+								gs_vertex2f(seg_end, lane_y + wave_offset2 - layer_thickness);
+								gs_vertex2f(seg_end, lane_y + wave_offset2 + layer_thickness);
+								gs_render_stop(GS_TRISTRIP);
+							}
 						}
 					}
 				}
