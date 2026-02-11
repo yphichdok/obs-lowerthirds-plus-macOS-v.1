@@ -1500,7 +1500,7 @@ void lowerthirds_source::render()
 			}
 		}
 		
-		// Draw art pattern overlay (if enabled)
+		// Draw art pattern overlay (if enabled) - clipped to background bounds
 		if (bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
 			draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
 				bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
@@ -2637,6 +2637,19 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 	gs_matrix_push();
 	gs_matrix_translate3f(x, y, 0.0f);
 	
+	// Enable scissor test to clip pattern to background bounds
+	gs_enable_color(true, true, true, true);
+	gs_enable_blending(true);
+	gs_blend_function(GS_BLEND_SRCALPHA, GS_BLEND_INVSRCALPHA);
+	
+	// Set scissor rectangle to clip to background area
+	struct gs_rect scissor_rect;
+	scissor_rect.x = (int)x;
+	scissor_rect.y = (int)y;
+	scissor_rect.cx = (int)width;
+	scissor_rect.cy = (int)height;
+	gs_set_scissor_rect(&scissor_rect);
+	
 	// Base spacing and size scaled by user setting
 	float base_spacing = 30.0f * scale;
 	float base_size = 5.0f * scale;
@@ -2903,6 +2916,9 @@ void lowerthirds_source::draw_background_pattern(float x, float y, float width, 
 		default:
 			break;
 	}
+	
+	// Disable scissor test
+	gs_set_scissor_rect(NULL);
 	
 	gs_matrix_pop();
 }
