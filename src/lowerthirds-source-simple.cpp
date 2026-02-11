@@ -206,7 +206,7 @@ static void lowerthirds_get_defaults(obs_data_t *settings)
 	// Background pattern defaults
 	obs_data_set_default_int(settings, "bg_pattern", PATTERN_DOTS); // Dots pattern by default
 	obs_data_set_default_int(settings, "pattern_color", 0xFF000000); // Black (ABGR format) - visible on light backgrounds
-	obs_data_set_default_int(settings, "pattern_opacity", 20); // Visible but not overwhelming
+	obs_data_set_default_int(settings, "pattern_opacity", 30); // Clearly visible
 	obs_data_set_default_double(settings, "pattern_scale", 1.0); // Normal size
 	obs_data_set_default_double(settings, "pattern_speed", 20.0); // Slow movement
 	obs_data_set_default_bool(settings, "pattern_animate", true); // Animated by default
@@ -734,7 +734,7 @@ lowerthirds_source::lowerthirds_source(obs_source_t *src, obs_data_t *settings)
 	, gradient_color2(0xFFD27619)
 	, bg_pattern(PATTERN_DOTS)
 	, pattern_color(0xFF000000)  // Black - visible on light backgrounds
-	, pattern_opacity(20)
+	, pattern_opacity(30)
 	, pattern_scale(1.0f)
 	, pattern_speed(20.0f)
 	, pattern_animate(true)
@@ -1499,13 +1499,14 @@ void lowerthirds_source::render()
 				}
 			}
 		}
-		
-		// Draw art pattern overlay (if enabled) - clipped to background bounds
-		if (bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
-			draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
-				bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
-				pattern_scale, pattern_animation_offset);
-		}
+	}
+	
+	// Draw art pattern overlay AFTER background (if enabled) - clipped to background bounds
+	// This ensures pattern renders on top of all background elements
+	if (show_background && bg_pattern != PATTERN_NONE && pattern_opacity > 0) {
+		draw_background_pattern(0.0f, 0.0f, (float)fixed_width, bar_height, 
+			bg_pattern, pattern_color, (pattern_opacity / 100.0f) * alpha, 
+			pattern_scale, pattern_animation_offset);
 	}
 	
 	gs_matrix_pop();
